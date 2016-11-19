@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title></title>
+    <link rel="stylesheet" href="">
+    <script src="bower_components/d3/d3.min.js"></script>
+    <script src="bower_components/topojson/topojson.js"></script>
+    <style>
+        .counties path {
+            stroke-width: 0.25;
+            stroke: white;
+        }
+        .states path {
+            fill-opacity: 50%;
+        }
+        .states path:hover {
+            fill-opacity: 75%;
+        }
+        .boundary {
+            stroke: #555;
+            stroke-width: 1;
+            fill: none;
+            stroke-linejoin: round;
+        }
+        text {
+            font-family: sans-serif;
+        }
+        .states text {
+            font-size: 20px;
+        }
+        .tables {
+            display: flex;
+            width: 100%;
+        }
+        table {
+            margin-right: 2em;
+        }
+        .winner {
+            background-color: skyblue;
+        }
+        #info {
+            height: 100px;
+            width: 200px;
+            display: none;
+            background-color: white;
+            position: absolute;
+        }
+    </style>
+</head>
+<body>
+    <div class="tables"></div>
+    </ul>
+    <script src="main.js"></script>
+</body>
+</html>
