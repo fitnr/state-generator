@@ -3,6 +3,15 @@
 var stateMaker = require('./statemaker');
 var apportion = require('./apportion');
 
+function setdefault(obj, key, defaultValue) {
+    if (obj[key] === undefined)
+        obj[key] = defaultValue;
+    return obj[key];
+}
+function random(list) {
+    return list[Math.floor(Math.random() * list.length)];
+}
+
 var height = 1000,
     width = 1900;
 
@@ -97,9 +106,13 @@ function program(error, topo, csv) {
     // given seeds
     // var seedindices = d3.shuffle(seeds).map(function(d) { return features.indexOf(mapfeatures.get(d)); });
     // totally random
-    var seedindices = d3.shuffle(d3.range(features.length)).slice(0, 48);
+    // var seedindices = d3.shuffle(d3.range(features.length)).slice(0, 48);
     var elections = Object.keys(candidates);
 
+    var byOriginalState = features.filter(d => ['02', '15', '11001'].indexOf(d.properties.id) == -1)
+        .reduce((obj, d, i) => (setdefault(obj, d.properties.id.substr(0, 2), []).push(i),
+            obj), {});
+    var seedindices = Object.keys(byOriginalState).map(d => random(byOriginalState[d]));
 
     var paths = svg.append('g')
         .attr('class', 'counties')
