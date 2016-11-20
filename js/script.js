@@ -45,15 +45,15 @@ var candidates = {
     }
 };
 
-var lightness = d3.scaleLinear()
-    .domain([10000, 2e6])
-    .range([1.5, 0.75])
-    .clamp(false);
+var opacity = d3.scaleLinear()
+    .domain([1, 2e5])
+    .range([0.15, 1])
+    .clamp(true);
 
 var redblue = d3.scaleLinear()
     .clamp(true)
     .domain([0.25, 0.5, 0.75])
-    .range(['#2166ac', '#964ad9', '#e31a1c']);
+    .range(['#2166ac', '#964372', '#e31a1c']);
 
 // probability functions
 var countScale = d3.scalePow()
