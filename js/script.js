@@ -203,9 +203,21 @@ function program(error, topo, csv) {
         .attr('d', path)
         .attr('id', function(d, i) { return 'state-' + i; });
 
-    statePaths.append('text')
-        .attr('transform', function(d) { return 'translate(' + path.centroid(d) + ')'; })
-        .text(function(_, i) { return evs[i]; });
+    var text = statePaths.append('text')
+        .attr('class', 'label')
+        .attr('transform', d => 'translate(' + path.centroid(d) + ')')
+        .attr('x', 0)
+        .attr('y', 0);
+
+    text.append('tspan')
+        .attr('x', 0)
+        .attr('y', 0)
+        .text(d => d.properties.name);
+
+    text.append('tspan')
+        .attr('x', 0)
+        .attr('y', '1.15em')
+        .text(d => d.properties.ev);
 
     svg.append('g').append('path')
         .datum(topojson.mesh(topo, topo.objects.counties, (a, b) =>

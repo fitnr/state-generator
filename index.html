@@ -15,7 +15,8 @@
         .states path {
             fill-opacity: 50%;
         }
-        .states path:hover {
+        .states path:hover,
+        .label:hover + path {
             fill-opacity: 75%;
         }
         .boundary {
@@ -24,11 +25,16 @@
             fill: none;
             stroke-linejoin: round;
         }
-        text {
+        .label {
+            fill: #444;
             font-family: sans-serif;
+            font-size: 10px;
+            text-anchor: middle;
+            cursor: default;
         }
-        .states text {
-            font-size: 20px;
+        path:hover + .label,
+        .label:hover {
+            font-weight: bold;
         }
         .tables {
             display: flex;
