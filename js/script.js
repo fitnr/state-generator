@@ -205,29 +205,29 @@ function program(error, topo, csv) {
         .text(function(_, i) { return evs[i]; });
 
     svg.append('g').append('path')
-        .datum(topojson.mesh(topo, topo.objects.counties, function(a, b) {
-            return maker.countyMaps.fips[a.properties.id] !== maker.countyMaps.fips[b.properties.id];
-        }))
+        .datum(topojson.mesh(topo, topo.objects.counties, (a, b) =>
+            maker.countyMaps.fips[a.properties.id] !== maker.countyMaps.fips[b.properties.id]
+        ))
         .attr('class', 'boundary')
         .attr('d', path);
 
     var tables = d3.select('.tables').selectAll('table')
         .data(votes).enter()
         .append('table')
-        .sort(function(a, b) { return b.year - a.year; });
+        .sort((a, b) => b.year - a.year);
 
     tables.append('thead').append('tr')
         .selectAll('th')
         .data(['candidate', 'popular', 'electoral', 'n']).enter()
         .append('th')
-        .text(function(d) { return d; });
+        .text(d => d);
 
     tables.append('tbody').selectAll('tr')
         .data(function(d) { return d.data; }).enter()
         .append('tr')
-            .attr('class', function(d) { return d[1] > 269 ? 'winner' : ''; })
+            .attr('class', d => d[1] > 269 ? 'winner' : '')
             .selectAll('td')
-            .data(function(d) { return d; }).enter()
+            .data(d => d).enter()
             .append('td')
             .text(function(d) {
                 var x = fmt(d);
