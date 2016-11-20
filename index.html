@@ -19,7 +19,7 @@
             fill-opacity: 75%;
         }
         .boundary {
-            stroke: #555;
+            stroke: #333;
             stroke-width: 1;
             fill: none;
             stroke-linejoin: round;
@@ -51,7 +51,23 @@
 </head>
 <body>
     <div class="tables"></div>
-    </ul>
+    <form action="">
+        <fieldset>
+            <label for="view-state">
+                <input type="radio" id="view-state" name="view" value="state"> State
+            </label>
+            <label for="view-county">
+                <input type="radio" id="view-county" name="view" value="county" checked> County
+            </label>
+        </fieldset>
+        <fieldset>
+            <label for="year-16"><input name="year" id="year-16" value="16" type="radio" checked>2016</label>
+            <label for="year-12"><input name="year" id="year-12" value="12" type="radio">2012</label>
+            <label for="year-08"><input name="year" id="year-08" value="08" type="radio">2008</label>
+            <label for="year-04"><input name="year" id="year-04" value="04" type="radio">2004</label>
+            <label for="year-00"><input name="year" id="year-00" value="00" type="radio">2000</label>
+        </fieldset>
+    </form>
     <script src="main.js"></script>
 </body>
 </html>

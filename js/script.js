@@ -42,14 +42,14 @@ var candidates = {
 };
 
 var lightness = d3.scaleLinear()
-    .domain([100, 1e6, 2e6])
-    .range([0.96, 0.4, 0.3])
-    .clamp(1);
+    .domain([10000, 2e6])
+    .range([1.5, 0.75])
+    .clamp(false);
 
 var redblue = d3.scaleLinear()
     .clamp(true)
-    .domain([0.3, 0.5, 0.7])
-    .range(['#2166ac', '#bd9cd9', '#e31a1c']);
+    .domain([0.25, 0.5, 0.75])
+    .range(['#2166ac', '#964ad9', '#e31a1c']);
 
 // probability functions
 var countScale = d3.scalePow()
@@ -100,25 +100,13 @@ function program(error, topo, csv) {
     var seedindices = d3.shuffle(d3.range(features.length)).slice(0, 48);
     var elections = Object.keys(candidates);
 
-    // var paths = svg.append('g')
-    //     .attr('class', 'counties')
-    //     .selectAll('path')
-    //     .data(features).enter()
-    //     .append("path")
-    //     .attr('d', path)
-    //     .attr('id', function(d) { return 'geoid-' + d.properties.id; });
 
-    function drawResults(year) {
-        paths.attr('fill', function(d) {
-            var x = results.get(d.properties.id);
-            var hsl = d3.hsl(redblue( +x['r'+year] / (+x['r'+year] + Number(x['d'+year]))));
-            hsl.l = lightness(d.properties.pop);
-            // debugger;
-            return hsl+"";
-        });
-    }
-
-    // drawResults('16');
+    var paths = svg.append('g')
+        .attr('class', 'counties')
+        .selectAll('path')
+        .data(features).enter()
+        .append("path")
+        .attr('d', path);
 
     maker = new stateMaker(features, neighbors, {prob: prob});
     maker.addState([features.indexOf(mapfeatures.get('02'))]);
@@ -158,7 +146,22 @@ function program(error, topo, csv) {
         var oppo = party === 'd' ? 'r' : 'd';
         return evs.map((ev, i) => (counts[year][party][i] > counts[year][oppo][i]) ? ev : 0);
     }
+    var statePaths = svg.append('g')
+        .attr('class', 'states')
+        .selectAll('.state')
+        .data(statefeatures).enter()
+        .append('g')
+        .attr('class', 'state');
 
+    var countyFill = function(d) {
+        var x = results.get(d.properties.id);
+        var hsl = d3.hsl(redblue(+x['r' + this] / (+x['r' + this] + Number(x['d' + this]))));
+        hsl.l *= lightness(x['tot' + this]);
+        return '' + hsl;
+    };
+    var stateFill = function(d, i) {
+        return counts[this].d[i] > counts[this].r[i] ? redblue.range()[0] : redblue.range()[2];
+    };
     var votes = elections.map(function(year) {
         var dev = getEv(year, 'd'), rev = getEv(year, 'r');
         return {
@@ -169,19 +172,7 @@ function program(error, topo, csv) {
         ]};
     });
 
-    var statePaths = svg.append('g')
-        .attr('class', 'states')
-        .selectAll('.state')
-        .data(statefeatures).enter()
-        .append('g')
-        .attr('class', 'state');
-
-    statePaths.attr('fill', function(d, i) {
-        return counts[16].d[i] > counts[16].r[i] ? redblue.range()[0] : redblue.range()[2];
-    });
-
-    statePaths
-        .append('path')
+    statePaths.append('path')
         .attr('d', path)
         .attr('id', function(d, i) { return 'state-' + i; });
 
@@ -195,14 +186,6 @@ function program(error, topo, csv) {
         }))
         .attr('class', 'boundary')
         .attr('d', path);
-
-    // d3.select('body').append('ul')
-    //     .selectAll('li')
-    //     .data(maker.states()).enter()
-    //     .append('li')
-    //     .text(function(state) {
-    //         return '' + state.size() + ' counties. ' + fmt(maker.sum(state, 'pop'));
-    //     });
 
     var tables = d3.select('.tables').selectAll('table')
         .data(votes).enter()
@@ -229,6 +212,23 @@ function program(error, topo, csv) {
 
     var pointer = d3.select('body').append('div')
         .attr('id', 'info');
+
+    function draw() {
+        var geography = document.querySelector('[name=view]:checked').value;
+        var year = document.querySelector('[name=year]:checked').value;
+
+        if (geography === 'county') {
+            paths.attr('fill', countyFill.bind(year));
+            statePaths.attr('fill', 'none');
+        } else {
+            statePaths.attr('fill', stateFill.bind(year));
+            paths.attr('fill', 'none');
+        }
+    }
+
+    d3.selectAll('[name=view], [name=year]').on('change', draw);
+
+    draw();
 
     // d3.selectAll('.states')
     //     .on('mousemove', function(d) {
