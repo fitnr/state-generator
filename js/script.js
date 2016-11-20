@@ -3,11 +3,6 @@
 var stateMaker = require('./statemaker');
 var apportion = require('./apportion');
 
-function setdefault(obj, key, defaultValue) {
-    if (obj[key] === undefined)
-        obj[key] = defaultValue;
-    return obj[key];
-}
 function random(list) {
     return list[Math.floor(Math.random() * list.length)];
 }
@@ -109,9 +104,14 @@ function program(error, topo, csv) {
     // var seedindices = d3.shuffle(d3.range(features.length)).slice(0, 48);
     var elections = Object.keys(candidates);
 
-    var byOriginalState = features.filter(d => ['02', '15', '11001'].indexOf(d.properties.id) == -1)
-        .reduce((obj, d, i) => (setdefault(obj, d.properties.id.substr(0, 2), []).push(i),
-            obj), {});
+    var byOriginalState = features.reduce(function(obj, d, i) {
+            if (['02', '15', '11001'].indexOf(d.properties.id) > -1)
+                return obj;
+            var key = d.properties.id.substr(0, 2);
+            obj[key] = obj[key] || [];
+            obj[key].push(i);
+            return obj;
+        }, {});
     var seedindices = Object.keys(byOriginalState).map(d => random(byOriginalState[d]));
 
     var paths = svg.append('g')
@@ -125,6 +125,8 @@ function program(error, topo, csv) {
     maker.addState([features.indexOf(mapfeatures.get('02'))]);
     maker.addState([features.indexOf(mapfeatures.get('15'))]);
     var dc = maker.addState([features.indexOf(mapfeatures.get('11001'))]);
+
+    // seedindices.map(x => maker.addState([x]), maker).forEach(maker.freezeState, maker);
 
     maker.freezeState(dc)
         .divideCountry(seedindices, {assignOrphans: true});
