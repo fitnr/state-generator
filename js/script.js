@@ -166,14 +166,23 @@ function program(error, topo, csv) {
         .append('g')
         .attr('class', 'state');
 
-    var countyFill = function(d) {
-        var x = results.get(d.properties.id);
-        var hsl = d3.hsl(redblue(+x['r' + this] / (+x['r' + this] + Number(x['d' + this]))));
-        hsl.l *= lightness(x['tot' + this]);
-        return '' + hsl;
+    var countyFill = function(selection) {
+        var year = this;
+        selection
+            .attr('fill', function(d) {
+                var x = results.get(d.properties.id);
+                return redblue(+x['r' + year] / (+x['r' + year] + Number(x['d' + year])));
+            })
+            .attr('fill-opacity', function(d) {
+                var x = results.get(d.properties.id);
+                return opacity(x['tot' + year]);
+            });
     };
-    var stateFill = function(d, i) {
-        return counts[this].d[i] > counts[this].r[i] ? redblue.range()[0] : redblue.range()[2];
+    var stateFill = function(selection) {
+        var year = this;
+        selection.attr('fill', (d, i) =>
+            counts[year].d[i] > counts[year].r[i] ? redblue.range()[0] : redblue.range()[2]
+        );
     };
     var votes = elections.map(function(year) {
         var dev = getEv(year, 'd'), rev = getEv(year, 'r');
@@ -231,10 +240,10 @@ function program(error, topo, csv) {
         var year = document.querySelector('[name=year]:checked').value;
 
         if (geography === 'county') {
-            paths.attr('fill', countyFill.bind(year));
+            paths.call(countyFill.bind(year));
             statePaths.attr('fill', 'none');
         } else {
-            statePaths.attr('fill', stateFill.bind(year));
+            statePaths.call(stateFill.bind(year));
             paths.attr('fill', 'none');
         }
     }
