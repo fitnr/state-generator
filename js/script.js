@@ -114,7 +114,7 @@ function program(error, topo, csv) {
         }, {});
     var seedindices = Object.keys(byOriginalState).map(d => random(byOriginalState[d]));
 
-    var paths = svg.append('g')
+    var countyPaths = svg.append('g')
         .attr('class', 'counties')
         .selectAll('path')
         .data(features).enter()
@@ -130,14 +130,6 @@ function program(error, topo, csv) {
 
     maker.freezeState(dc)
         .divideCountry(seedindices, {assignOrphans: true});
-
-    var statefeatures = maker.states().map(function(state) {
-        return topojson.merge(
-            topo,
-            topo.objects.counties.geometries
-                .filter(function(_, i) { return state.has(i); })
-        );
-    });
 
     // extra rep for D.C.
     var evs = apportion.evCount(maker, {reps: 436});
@@ -161,6 +153,18 @@ function program(error, topo, csv) {
         var oppo = party === 'd' ? 'r' : 'd';
         return evs.map((ev, i) => (counts[year][party][i] > counts[year][oppo][i]) ? ev : 0);
     }
+
+    var statefeatures = maker.states().map(function(state, j) {
+        var feature = topojson.merge(topo,
+            topo.objects.counties.geometries.filter((_, i) => state.has(i))
+        );
+        feature.properties = {
+            ev: evs[j],
+            name: random(Array.from(state).map(county => features[county].properties.n)),
+        };
+        return feature;
+    });
+
     var statePaths = svg.append('g')
         .attr('class', 'states')
         .selectAll('.state')
@@ -171,18 +175,17 @@ function program(error, topo, csv) {
     var countyFill = function(selection) {
         var year = this;
         selection
-            .attr('fill', function(d) {
+            .style('fill', function(d) {
                 var x = results.get(d.properties.id);
                 return redblue(+x['r' + year] / (+x['r' + year] + Number(x['d' + year])));
             })
-            .attr('fill-opacity', function(d) {
-                var x = results.get(d.properties.id);
-                return opacity(x['tot' + year]);
-            });
+            .style('fill-opacity', d =>
+                opacity(results.get(d.properties.id)['tot' + year])
+            );
     };
     var stateFill = function(selection) {
         var year = this;
-        selection.attr('fill', (d, i) =>
+        selection.style('fill', (d, i) =>
             counts[year].d[i] > counts[year].r[i] ? redblue.range()[0] : redblue.range()[2]
         );
     };
@@ -242,11 +245,16 @@ function program(error, topo, csv) {
         var year = document.querySelector('[name=year]:checked').value;
 
         if (geography === 'county') {
-            paths.call(countyFill.bind(year));
-            statePaths.attr('fill', 'none');
+            countyPaths.call(countyFill.bind(year));
+            statePaths.selectAll('path').style('fill-opacity', 0);
+
         } else {
-            statePaths.call(stateFill.bind(year));
-            paths.attr('fill', 'none');
+            statePaths
+                .call(stateFill.bind(year))
+                .selectAll('path')
+                    .style('fill-opacity', null);
+
+            countyPaths.style('fill-opacity', 0);
         }
     }
 
