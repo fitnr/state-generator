@@ -73,36 +73,8 @@ function prob(count, pop) {
 
 var fmt = d3.format(',');
 
-var maker;
-// centers of metros
-// var seeds = ['06009', '08059', 12095, 22127, 36061,
-//     54063, '01073', '04007', 12039, 17031, 30077,
-//     47119, '06073', '06079', 42101, '06041', 48321,
-//     47029, 56025, 16011, 21077, 29187, 45081, 36101,
-//     35049, 24510, 53027, '05035', 20005, 13057, 27123,
-//     48367, 44003, 42073, 50015, 51760, 12011, 55131,
-//     39173, 40017, 23019, 28031, 31021, 41053,
-//     38083, 33005, 18095, 26145
-// ];
-// NYS
-// var seeds = '36031|36033|36035|36037|36039|36041|36043|36045|36047|36049|36051|36053|36055|36057|36059|36061|36063|36065|36067|36069|36071|36073|36075|36077|36079|36081|36083|36085|36087|36089|36091|36093|36095|36097|36099|36101|36103|36105|36107|36109|36111|36113|36115|36117|36119|36121|36123'.split('|');
-// highest democratic vote 2016
-// var seeds = '06037|17031|48201|12086|36047|42101|12011|04013|26163|36061|25017|53033|36081|48113|27053|32003|06059|06073|39035|12099|42003|51059|26125|39049|12095|48029|36005|24033|06085|24031|36059|48453|12057|06001|37183|37119|55079|48439|13121|29189|36103|41051|11001|42091|36119|25025|13089|12103'.split('|');
-
-function program(error, topo, csv) {
-    if (error) throw error;
-
-    var features = topojson.feature(topo, topo.objects.counties).features;
-    var mapfeatures = d3.map(features, function(d) {
-        return d.properties.id;
-    });
-    var neighbors = topojson.neighbors(topo.objects.counties.geometries);
-    var results = d3.map(csv, function(d) { return d.GEOID; });
-    // given seeds
-    // var seedindices = d3.shuffle(seeds).map(function(d) { return features.indexOf(mapfeatures.get(d)); });
-    // totally random
-    // var seedindices = d3.shuffle(d3.range(features.length)).slice(0, 48);
-    var elections = Object.keys(candidates);
+function make(features) {
+    var map = d3.map(features, d => d.properties.id);
 
     var byOriginalState = features.reduce(function(obj, d, i) {
             if (['02', '15', '11001'].indexOf(d.properties.id) > -1)
@@ -112,6 +84,7 @@ function program(error, topo, csv) {
             obj[key].push(i);
             return obj;
         }, {});
+
     var seedindices = Object.keys(byOriginalState).map(d => random(byOriginalState[d]));
 
     var countyPaths = svg.append('g')
@@ -121,15 +94,32 @@ function program(error, topo, csv) {
         .append("path")
         .attr('d', path);
 
-    maker = new stateMaker(features, neighbors, {prob: prob});
-    maker.addState([features.indexOf(mapfeatures.get('02'))]);
-    maker.addState([features.indexOf(mapfeatures.get('15'))]);
-    var dc = maker.addState([features.indexOf(mapfeatures.get('11001'))]);
+    var maker = new stateMaker(features, neighbors, {prob: prob});
+    maker.addState([features.indexOf(map.get('02'))]);
+    maker.addState([features.indexOf(map.get('15'))]);
 
-    // seedindices.map(x => maker.addState([x]), maker).forEach(maker.freezeState, maker);
+    var dc = maker.addState([features.indexOf(map.get('11001'))]);
 
     maker.freezeState(dc)
         .divideCountry(seedindices, {assignOrphans: true});
+
+    return maker;        
+}
+
+function program(error, topo, csv) {
+    if (error) throw error;
+
+    var features = topojson.feature(topo, topo.objects.counties).features;
+
+    var neighbors = topojson.neighbors(topo.objects.counties.geometries);
+    var results = d3.map(csv, function(d) { return d.GEOID; });
+    // given seeds
+    // var seedindices = d3.shuffle(seeds).map(function(d) { return features.indexOf(mapfeatures.get(d)); });
+    // totally random
+    // var seedindices = d3.shuffle(d3.range(features.length)).slice(0, 48);
+    var elections = Object.keys(candidates);
+
+    var maker = make(features);
 
     // extra rep for D.C.
     var evs = apportion.evCount(maker, {reps: 436});
