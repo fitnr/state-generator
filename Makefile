@@ -12,11 +12,14 @@ data/counties.json: geo/counties.geojson | data
 	geo2topo $< | \
 	toposimplify -fp 0.045 -o $@
 
-geo/counties.geojson: geo/counties.shp
+geo/counties.geojson: geo/counties.shp census/DEC_00_SF1_P1.csv census/DEC_10_SF1_P1.csv
 	@rm -f $@
 	ogr2ogr $@ $< -f GeoJSON -dialect sqlite \
-		-sql "SELECT Geometry, CASE GEOID WHEN '46113' THEN '46102' ELSE GEOID END id, \
-			NAME n, CAST(B01003_001 as INTEGER) as pop FROM counties"
+		-sql "SELECT Geometry, GEOID, a.NAME n, \
+			CAST(dec00.P01 as INTEGER) AS pop00, CAST(dec10.P01 as INTEGER) AS pop10 \
+			FROM counties a \
+			LEFT JOIN 'census/DEC_00_SF1_P1.csv'.DEC_00_SF1_P1 AS dec00 USING (GEOID) \
+			LEFT JOIN 'census/DEC_10_SF1_P1.csv'.DEC_10_SF1_P1 AS dec10 USING (GEOID)"
 
 data/results.csv: $(foreach x,00 04 08 12 16,dbf/20$(x).dbf) | data
 	ogr2ogr -f CSV $@ $(<D) -dialect sqlite \
@@ -112,11 +115,12 @@ dbf/2000.dbf: results/2000.csv | dbf
 	ogrinfo $(@D) -sql 'CREATE INDEX ON "2000" USING GEOID'
 
 geo/counties.shp: $(DIR)/COUNTY/cb_2014_us_county_500k.shp $(DIR)/STATE/cb_2014_us_state_500k.shp | geo
-	ogr2ogr $@ $< -select GEOID,NAME,B01003_001 -where "GEOID NOT LIKE '02%' \
+	ogr2ogr $@ $< -select GEOID,NAME -where "GEOID NOT LIKE '02%' \
 		AND GEOID NOT LIKE '15%' \
 		AND GEOID NOT LIKE '72%' \
 		AND GEOID NOT LIKE '78%' \
 		AND GEOID NOT LIKE '60%'"
-	ogr2ogr $@ $(word 2,$^) -update -append -select GEOID,B01003_001 -where "GEOID IN ('02', '15')"
+	ogr2ogr $@ $(word 2,$^) -update -append -select GEOID,NAME -where "GEOID IN ('02', '15')"
+	ogrinfo $(@D) -dialect sqlite -sql "UPDATE "$(basename $(@F))" SET GEOID='46102' WHERE GEOID='46113'"
 
 data geo dbf:; mkdir -p $@

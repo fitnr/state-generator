@@ -1,0 +1,3 @@
+* Alaska and Hawaii are combined and treated as counties in most data files
+* In census/*.csv, the GEOID for Oglalla Lakota County, SD has been used in place of Shannon County's
+* Bedford city and Clifton Forge city, VA, are incorporated into their parent counties in all data files
