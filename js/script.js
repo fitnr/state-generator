@@ -128,15 +128,19 @@ function program(error, topo, csv) {
 
     // set up SVG and DOM
     var state = svg.append('g').attr('class', 'states');
+
     var boundary = svg.append('g')
         .append('path')
         .attr('class', 'boundary');
+
+    var labels = svg.append('g').attr('class', 'labels');
 
     // create tables
     var tables = d3.select('.tables').selectAll('table')
         .data(elections).enter()
         .append('table')
         .sort((a, b) => b - a);
+
     tables.append('thead').append('tr')
             .selectAll('th')
             .data(['candidate', 'popular', 'electoral', 'n']).enter()
@@ -190,19 +194,29 @@ function program(error, topo, csv) {
             return feature;
         });
 
-        var update = state.selectAll('.state')
+        // state paths
+
+        var states = state.selectAll('path')
             .data(statefeatures, (d, i) => d.properties.hash);
 
-        update.exit().remove();
+        states.exit().remove();
 
-        var enter = update.enter()
-            .append('g')
-            .attr('class', 'state');
+        var enterStates = states.enter()
+            .append('path');
 
-        enter.append('path');
+        states.merge(enterStates)
+            .attr('d', path)
+            .attr('id', (d, i) => 'state-' + i);
 
-        var enterText = enter.append('text')
-            .attr('class', 'label')
+        // state label text
+
+        var text = labels.selectAll('text')
+            .data(statefeatures, (d, i) => d.properties.hash);
+
+        text.exit().remove();
+
+        var enterText = text.enter()
+            .append('text')
             .attr('x', 0)
             .attr('y', 0);
 
@@ -214,16 +228,12 @@ function program(error, topo, csv) {
             .attr('x', 0)
             .attr('y', '1.15em');
 
-        var statePaths = update.merge(enter);
-
-        statePaths.selectAll('path')
-            .attr('d', path)
-            .attr('id', (d, i) => 'state-' + i);
-
-        var text = statePaths.selectAll('text')
+        text = text.merge(enterText)
             .attr('transform', d => 'translate(' + path.centroid(d) + ')');
 
         text.selectAll('tspan:first-child').text(d => d.properties.name);
+
+        // state boundary
 
         boundary.datum(
             topojson.mesh(topo, topo.objects.counties, (a, b) =>
@@ -279,7 +289,7 @@ function program(error, topo, csv) {
             var geography = document.querySelector('[name=view]:checked').value;
             var year = document.querySelector('[name=year]:checked').value;
 
-            var states = d3.selectAll('.state');
+            var states = d3.select('.states').selectAll('path');
             var cg = d3.selectAll('.counties');
 
             text.selectAll('tspan:last-child').text(d => d.properties.ev[census(year)]);
@@ -288,14 +298,12 @@ function program(error, topo, csv) {
                 d3.selectAll('.county')
                     .call(countyFill.bind(year));
                 cg.style('display', 'inherit');
-                states.selectAll('path')
-                    .style('fill-opacity', 0);
+                states.style('fill-opacity', 0);
 
             } else {
                 states
                     .call(stateFill.bind(year))
-                    .selectAll('path')
-                        .style('fill-opacity', null);
+                    .style('fill-opacity', null);
 
                 cg.style('display', 'none');
             }

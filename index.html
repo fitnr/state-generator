@@ -8,6 +8,9 @@
     <script src="bower_components/d3/d3.min.js"></script>
     <script src="bower_components/topojson/topojson.js"></script>
     <style>
+        body {
+            font-family: sans-serif;
+        }
         .counties path {
             stroke-width: 0.25;
             stroke: white;
@@ -25,16 +28,12 @@
             fill: none;
             stroke-linejoin: round;
         }
-        .label {
+        .labels text {
             fill: #444;
             font-family: sans-serif;
             font-size: 10px;
             text-anchor: middle;
             cursor: default;
-        }
-        path:hover + .label,
-        .label:hover {
-            font-weight: bold;
         }
         .tables {
             display: flex;
@@ -42,9 +41,21 @@
         }
         table {
             margin-right: 2em;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+        td {
+            text-align: right
+        }
+        td:first-child {
+            text-align: left;
+        }
+        fieldset {
+            border: 0;
+            padding: 0.5em 0;
         }
         .winner {
-            background-color: skyblue;
+            background-color: LightSteelBlue;
         }
         #info {
             height: 100px;
