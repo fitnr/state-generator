@@ -44,6 +44,20 @@ var candidates = {
     }
 };
 
+// force connection across the mackinac strait
+// and chesapeake bay
+// and Mass islands
+// and Wash Islands
+var forceNeighbors = [
+    ['26097', '26031'],
+    ['26097', '26047'],
+    ['51810', '51131'],
+    ['25007', '25019'],
+    ['25001', '25019'],
+    ['25007', '25001'],
+    ['53073', '53055'],
+];
+
 var opacity = d3.scaleLinear()
     .domain([1, 2e5])
     .range([0.15, 1])
@@ -110,6 +124,17 @@ function program(error, topo, csv) {
     var neighbors = topojson.neighbors(topo.objects.counties.geometries);
     var results = d3.map(csv, function(d) { return d.GEOID; });
     var elections = Object.keys(candidates);
+    var ids = features.map(d => d.properties.id);
+
+    function add_connection(id1, id2) {
+        var idx1 = ids.indexOf(id1);
+        var idx2 = ids.indexOf(id2);
+        if (idx1 === -1 || idx2 === -1) return;
+        neighbors[idx2].push(idx1);
+        neighbors[idx1].push(idx2);
+    }
+
+    forceNeighbors.forEach(pair => add_connection.apply(null, pair));
 
     // e.g. voteCount('d16') returns state-by-state totals for Dem in '16
     stateMaker.prototype.voteCount = function(key) {
