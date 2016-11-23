@@ -1,5 +1,7 @@
 /* jshint esversion: 6 */
 
+var apportion = require('./apportion');
+
 function range(n) {
     return Array.apply(null, Array(n)).map(function (_, i) { return i; });
 }
@@ -19,6 +21,7 @@ function stateMaker(features, neighbors, options) {
     this.frozen = new Set();
     // this.noNeighbors = new Set();
     this.unselected = new Set(range(this.features.length));
+    this.evs = [];
     return this;
 }
 
@@ -102,6 +105,7 @@ stateMaker.prototype.divideCountry = function(seeds, options) {
         while (this.unselected.size > 0)
             Array.from(this.unselected).forEach(this.assignOrphans, this);
 
+    this.evs = this.ev(options.reps)
     return this._states;
 };
 
@@ -159,3 +163,9 @@ stateMaker.prototype.generateState = function(seed) {
         .forEach(function(c) { this.addToState(c, state); }, this);
 };
 */
+
+stateMaker.prototype.ev = function(reps) {
+    reps = reps || 436;
+    return apportion(this.states().map(state => this.sum(state, 'pop')), {reps: reps})
+        .map(d => d + 2);
+};

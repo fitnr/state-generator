@@ -4,7 +4,7 @@
  * @states a list of populations. 
  * @returns Array of representative count
  */
-function apportion(states, options) {
+module.exports = function(states, options) {
     options = options || {};
     var reps = options.reps || 435,
         allocations = states.map(function() { return 1; }),
@@ -24,12 +24,4 @@ function apportion(states, options) {
         allocated = allocations.reduce(sum);
     }
     return allocations;
-}
-
-module.exports.evCount = function (statemaker, options) {
-    options = options || {reps: 436};
-    return apportion(statemaker.states().map(state => statemaker.sum(state, 'pop')), options)
-        .map(d => d + 2);
 };
-
-module.exports.apportion = apportion;
