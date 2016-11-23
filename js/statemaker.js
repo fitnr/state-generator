@@ -21,7 +21,6 @@ function stateMaker(features, neighbors, options) {
     this.frozen = new Set();
     // this.noNeighbors = new Set();
     this.unselected = new Set(range(this.features.length));
-    this.evs = [];
     return this;
 }
 
@@ -105,7 +104,6 @@ stateMaker.prototype.divideCountry = function(seeds, options) {
         while (this.unselected.size > 0)
             Array.from(this.unselected).forEach(this.assignOrphans, this);
 
-    this.evs = this.ev(options.reps);
     return this._states;
 };
 
@@ -164,8 +162,8 @@ stateMaker.prototype.generateState = function(seed) {
 };
 */
 
-stateMaker.prototype.ev = function(reps) {
+stateMaker.prototype.ev = function(reps, key) {
     reps = reps || 436;
-    return apportion(this.states().map(state => this.sum(state, 'pop')), {reps: reps})
+    return apportion(this.states().map(state => this.sum(state, key)), {reps: reps})
         .map(d => d + 2);
 };

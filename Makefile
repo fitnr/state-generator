@@ -12,14 +12,15 @@ data/counties.json: geo/counties.geojson | data
 	geo2topo $< | \
 	toposimplify -fp 0.045 -o $@
 
-geo/counties.geojson: geo/counties.shp census/DEC_00_SF1_P1.csv census/DEC_10_SF1_P1.csv
+geo/counties.geojson: geo/counties.shp $(foreach x,90 00 10,dbf/DEC_$x.dbf)
 	@rm -f $@
 	ogr2ogr $@ $< -f GeoJSON -dialect sqlite \
-		-sql "SELECT Geometry, GEOID, a.NAME n, \
-			CAST(dec00.P01 as INTEGER) AS pop00, CAST(dec10.P01 as INTEGER) AS pop10 \
+		-sql "SELECT Geometry, GEOID id, a.NAME n, CAST(dec90.P01 as INTEGER) AS '90', \
+			CAST(dec00.P01 as INTEGER) AS '00', CAST(dec10.P01 as INTEGER) AS '10' \
 			FROM counties a \
-			LEFT JOIN 'census/DEC_00_SF1_P1.csv'.DEC_00_SF1_P1 AS dec00 USING (GEOID) \
-			LEFT JOIN 'census/DEC_10_SF1_P1.csv'.DEC_10_SF1_P1 AS dec10 USING (GEOID)"
+			LEFT JOIN 'dbf'.DEC_90 AS dec90 USING (GEOID) \
+			LEFT JOIN 'dbf'.DEC_00 AS dec00 USING (GEOID) \
+			LEFT JOIN 'dbf'.DEC_10 AS dec10 USING (GEOID)"
 
 data/results.csv: $(foreach x,00 04 08 12 16,dbf/20$(x).dbf) | data
 	ogr2ogr -f CSV $@ $(<D) -dialect sqlite \
@@ -107,14 +108,10 @@ dbf/2000.dbf: results/2000.csv | dbf
 		d00 = (SELECT SUM(d00) FROM \"2000\" WHERE GEOID IN ('51560', '51005')), \
 		tot00 = (SELECT SUM(tot00) FROM \"2000\" WHERE GEOID IN ('51560', '51005')) \
 		WHERE GEOID = '51005'"
-	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"2000\" SET \
-		r00 = (SELECT SUM(r00) FROM \"2000\" WHERE GEOID IN ('51515', '51019')), \
-		d00 = (SELECT SUM(d00) FROM \"2000\" WHERE GEOID IN ('51515', '51019')), \
-		tot00 = (SELECT SUM(tot00) FROM \"2000\" WHERE GEOID IN ('51515', '51019')) \
-		WHERE GEOID = '51019'"
 	ogrinfo $(@D) -sql 'CREATE INDEX ON "2000" USING GEOID'
 
 geo/counties.shp: $(DIR)/COUNTY/cb_2014_us_county_500k.shp $(DIR)/STATE/cb_2014_us_state_500k.shp | geo
+	@rm -f $(basename $@).{idm,ind}
 	ogr2ogr $@ $< -select GEOID,NAME -where "GEOID NOT LIKE '02%' \
 		AND GEOID NOT LIKE '15%' \
 		AND GEOID NOT LIKE '72%' \
@@ -122,5 +119,32 @@ geo/counties.shp: $(DIR)/COUNTY/cb_2014_us_county_500k.shp $(DIR)/STATE/cb_2014_
 		AND GEOID NOT LIKE '60%'"
 	ogr2ogr $@ $(word 2,$^) -update -append -select GEOID,NAME -where "GEOID IN ('02', '15')"
 	ogrinfo $(@D) -dialect sqlite -sql "UPDATE "$(basename $(@F))" SET GEOID='46102' WHERE GEOID='46113'"
+	ogrinfo $(@D) -dialect sqlite -sql "UPDATE "$(basename $(@F))" SET NAME='DC' WHERE NAME='District of Columbia'"
+	ogrinfo $(@D) -sql 'CREATE INDEX ON $(basename $(@F)) USING GEOID'
+
+dbf/DEC_10.dbf dbf/DEC_00.dbf: dbf/%.dbf: census/%.csv | dbf
+	@rm -f $(basename $@).{idm,ind}
+	ogr2ogr $@ $<
+	ogrinfo $(@D) -sql 'CREATE INDEX ON $(basename $(@F)) USING GEOID'
+
+dbf/DEC_90.dbf: census/DEC_90.csv
+	@rm -f $(basename $@).{idm,ind}
+	ogr2ogr $@ $<
+	ogrinfo $(@D) -dialect sqlite -sql "UPDATE $(basename $(@F)) SET \
+		P01 = (SELECT SUM(CAST(P01 as INTEGER)) FROM $(basename $(@F)) WHERE GEOID IN ('51560', '51005')) \
+		WHERE GEOID = '51005'"
+	ogrinfo $(@D) -dialect sqlite -sql "UPDATE $(basename $(@F)) SET \
+		P01 = (SELECT SUM(CAST(P01 as INTEGER)) FROM $(basename $(@F)) WHERE GEOID IN ('51515', '51019')) \
+		WHERE GEOID = '51019'"
+	ogrinfo $(@D) -sql 'CREATE INDEX ON $(basename $(@F)) USING GEOID'
+
+census/DEC_90.csv: census/99C8_00.txt
+	echo GEOID,P01,NAME > $@
+	cut -c 4-10,130-176 $^ | \
+	sed -E 's/,//g; s/([0-9]+) +/\1,/g' | \
+	grep -vE '^(01|0[3-9]|1[0-46-9]|[2-9][0-9]),' | \
+	grep -vE -e '^15[0-9][0-9][0-9],' -e '^02[0-9][0-9][0-9],' | \
+	sed 's/^46113/46102/' \
+	>> $@
 
 data geo dbf:; mkdir -p $@

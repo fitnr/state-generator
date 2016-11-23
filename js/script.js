@@ -72,6 +72,10 @@ function prob(count, pop) {
 
 var fmt = d3.format(',');
 
+function census(year) {
+    return 2000 + (Math.floor((+year - 1) / 10) * 10);
+}
+
 function make(features, neighbors) {
     var map = d3.map(features, d => d.properties.id);
 
@@ -94,7 +98,7 @@ function make(features, neighbors) {
 
     // extra rep for D.C.
     maker.freezeState(dc)
-        .divideCountry(seedindices, {assignOrphans: true, reps: 436});
+        .divideCountry(seedindices, {assignOrphans: true});
 
     return maker;        
 }
@@ -155,10 +159,17 @@ function program(error, topo, csv) {
             }, obj
         ), {});
 
+        var evs = {
+            1990: maker.ev(436, '90'),
+            2000: maker.ev(436, '00'),
+            2010: maker.ev(436, '10'),
+        };
+
         // return the number list of EV total by state for given year, party
         function getEv(year, party) {
             var oppo = party === 'd' ? 'r' : 'd';
-            return maker.evs.map((ev, i) => (counts[year][party][i] > counts[year][oppo][i]) ? ev : 0);
+            var c = census(year);
+            return evs[c].map((ev, i) => (counts[year][party][i] > counts[year][oppo][i]) ? ev : 0);
         }
 
         var statefeatures = maker.states().map(function(state, j) {
@@ -166,7 +177,11 @@ function program(error, topo, csv) {
                 topo.objects.counties.geometries.filter((_, i) => state.has(i))
             );
             feature.properties = {
-                ev: maker.evs[j],
+                ev: {
+                    1990: evs[1990][j],
+                    2000: evs[2000][j],
+                    2010: evs[2010][j],
+                },
                 name: random(Array.from(state).map(county => features[county].properties.n)),
                 // not really a hash, but a string representation of the counties,
                 // for uniqueness purposes
@@ -209,7 +224,6 @@ function program(error, topo, csv) {
             .attr('transform', d => 'translate(' + path.centroid(d) + ')');
 
         text.selectAll('tspan:first-child').text(d => d.properties.name);
-        text.selectAll('tspan:last-child').text(d => d.properties.ev);
 
         boundary.datum(
             topojson.mesh(topo, topo.objects.counties, (a, b) =>
@@ -267,6 +281,8 @@ function program(error, topo, csv) {
 
             var states = d3.selectAll('.state');
             var cg = d3.selectAll('.counties');
+
+            text.selectAll('tspan:last-child').text(d => d.properties.ev[census(year)]);
 
             if (geography === 'county') {
                 d3.selectAll('.county')

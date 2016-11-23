@@ -82,10 +82,17 @@ function simulate(results, features, neighbors) {
         }, obj
     ), {});
 
+    var evs = {
+        1990: maker.ev(436, '90'),
+        2000: maker.ev(436, '00'),
+        2010: maker.ev(436, '10'),
+    };
+
     // return the number list of EV total by state for given year, party
     function getEv(year, party) {
         var oppo = party === 'd' ? 'r' : 'd';
-        return maker.evs.map((ev, i) => (counts[year][party][i] > counts[year][oppo][i]) ? ev : 0);
+        var census = 2000 + (Math.floor((+year - 1) / 10) * 10);
+        return evs[census].map((ev, i) => (counts[year][party][i] > counts[year][oppo][i]) ? ev : 0);
     }
 
     return elections.map(function(year) {
