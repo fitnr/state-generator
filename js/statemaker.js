@@ -105,7 +105,7 @@ stateMaker.prototype.divideCountry = function(seeds, options) {
         while (this.unselected.size > 0)
             Array.from(this.unselected).forEach(this.assignOrphans, this);
 
-    this.evs = this.ev(options.reps)
+    this.evs = this.ev(options.reps);
     return this._states;
 };
 

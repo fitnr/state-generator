@@ -6,31 +6,19 @@ var csv = require('csv');
 var topojson = require('topojson-client');
 var d3 = require('d3');
 var stateMaker = require('./js/statemaker');
-var apportion = require('./js/apportion');
 
 function list(x) { return x.split(','); }
+function random(list) { return list[Math.floor(Math.random() * list.length)]; }
 
 var parser = new ArgumentParser({version: '0.1'});
 
 parser.addArgument(['topojson']);
 parser.addArgument(['csv']);
 parser.addArgument(['-e', '--seeds'], {help: 'list of seed counties'});
+parser.addArgument(['--random-seeds'], {action: 'storeTrue', help: 'Use completely random seed list'});
 parser.addArgument(['-s', '--sims'], {help: 'number of simulations', type: parseInt, defaultValue: 100});
 
 var program = parser.parseArgs();
-
-/*
-var seeds = ['06009', '08059', 12095, 22127, 36061,
-    54063, '01073', '04007', 12039, 17031, 30077,
-    47119, '06073', '06079', 42101, '06041', 48321,
-    47029, 56025, 16011, 21077, 29187, 45081, 36101,
-    35049, 24510, 53027, '05035', 20005, 13057, 27123,
-    48367, 44003, 42073, 50015, 51760, 12011, 55131,
-    39173, 40017, 23019, 28031, 31021, 41053,
-    38083, 33005, 18095, 26145
-];
-*/
-debugger;
 
 var elections = ['00', '04', '08', '12', '16'];
 
@@ -55,17 +43,31 @@ function simulate(results, features, neighbors) {
 
     if (program.seeds)
         seedIndices = d3.shuffle(seeds).map(d => features.indexOf(mapfeatures.get(d)));
-    else
-        seedIndices = d3.shuffle(d3.range(features.length)).slice(0, 48);
+
+    // totally random seeds
+    else if (program.random_seeds)
+        seedIndices = d3.shuffle(d3.range(2, features.length)).slice(0, 48);
+
+    // pick one random county from each state
+    else {
+        var byOriginalState = features.reduce(function(obj, d, i) {
+                if (['02', '15', '11001'].indexOf(d.properties.id) > -1)
+                    return obj;
+                var key = d.properties.id.substr(0, 2);
+                obj[key] = obj[key] || [];
+                obj[key].push(i);
+                return obj;
+            }, {});
+
+        seedIndices = Object.keys(byOriginalState).map(d => random(byOriginalState[d]));
+    }
 
     maker = new stateMaker(features, neighbors, {prob: prob});
     maker.addState([features.indexOf(mapfeatures.get('02'))]);
     maker.addState([features.indexOf(mapfeatures.get('15'))]);
     var dc = maker.addState([features.indexOf(mapfeatures.get('11001'))]);
     maker.freezeState(dc)
-        .divideCountry(seedIndices);
-
-    var evs = apportion.evCount(maker, {reps: 436});
+        .divideCountry(seedIndices, {reps: 436});
 
     // e.g. voteCount('d16') returns state-by-state totals for Dem in '16
     var voteCount = function(key) {
@@ -83,7 +85,7 @@ function simulate(results, features, neighbors) {
     // return the number list of EV total by state for given year, party
     function getEv(year, party) {
         var oppo = party === 'd' ? 'r' : 'd';
-        return evs.map((ev, i) => (counts[year][party][i] > counts[year][oppo][i]) ? ev : 0);
+        return maker.evs.map((ev, i) => (counts[year][party][i] > counts[year][oppo][i]) ? ev : 0);
     }
 
     return elections.map(function(year) {
@@ -103,9 +105,10 @@ function summary(data) {
         var rows = [].concat.apply([], data).filter(d => d.year == year);
         return {
             year: year,
-            dwin: rows.filter(row => row.dev > row.rev).length,
+            dWin: rows.filter(row => row.dev > row.rev).length,
             ties: rows.filter(row => row.dev === row.rev).length,
-            davg: d3.sum(rows.map(row => row.dcount)) / rows.length,
+            dStateAvg: d3.sum(rows.map(row => row.dcount)) / rows.length,
+            dEvAvg: d3.sum(rows.map(row => row.dev)) / rows.length,
         };
     });
 }
