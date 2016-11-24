@@ -112,12 +112,12 @@ dbf/2000.dbf: results/2000.csv | dbf
 
 geo/counties.shp: $(DIR)/COUNTY/cb_2014_us_county_500k.shp $(DIR)/STATE/cb_2014_us_state_500k.shp | geo
 	@rm -f $(basename $@).{idm,ind}
-	ogr2ogr $@ $< -select GEOID,NAME -where "GEOID NOT LIKE '02%' \
+	ogr2ogr $@ $< -t_srs EPSG:4326 -select GEOID,NAME -where "GEOID NOT LIKE '02%' \
 		AND GEOID NOT LIKE '15%' \
 		AND GEOID NOT LIKE '72%' \
 		AND GEOID NOT LIKE '78%' \
 		AND GEOID NOT LIKE '60%'"
-	ogr2ogr $@ $(word 2,$^) -update -append -select GEOID,NAME -where "GEOID IN ('02', '15')"
+	ogr2ogr $@ $(word 2,$^) -update -append -t_srs EPSG:4326 -select GEOID,NAME -where "GEOID IN ('02', '15')"
 	ogrinfo $(@D) -dialect sqlite -sql "UPDATE "$(basename $(@F))" SET GEOID='46102' WHERE GEOID='46113'"
 	ogrinfo $(@D) -dialect sqlite -sql "UPDATE "$(basename $(@F))" SET NAME='DC' WHERE NAME='District of Columbia'"
 	ogrinfo $(@D) -sql 'CREATE INDEX ON $(basename $(@F)) USING GEOID'
