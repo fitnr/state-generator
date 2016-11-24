@@ -113,6 +113,7 @@ function summary(data) {
         return {
             year: year,
             dWin: rows.filter(row => row.dev > row.rev).length,
+            devs: rows.reduce((obj, row) => (obj[row.dev] = (obj[row.dev] + 1) || 1, obj), {}),
             ties: rows.filter(row => row.dev === row.rev).length,
             dStateAvg: d3.sum(rows.map(row => row.dcount)) / rows.length,
             dEvAvg: d3.sum(rows.map(row => row.dev)) / rows.length,
@@ -139,7 +140,7 @@ function run(error, json, csvData) {
 
         console.log('sims', simCount);
         console.log('averages');
-        summary(sims).forEach(x => console.log(x));
+        summary(sims).forEach(x => console.log(JSON.stringify(x)));
     });
     fs.createReadStream(__dirname + '/' + program.csv).pipe(parser);
 }

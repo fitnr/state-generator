@@ -169,6 +169,7 @@ function program(error, topo, csv) {
             .data(['candidate', 'popular', 'electoral', 'n']).enter()
             .append('th')
             .text(d => d);
+
     var tbodies = tables.append('tbody');
 
     /**
@@ -275,12 +276,14 @@ function program(error, topo, csv) {
                     opacity(results.get(d.properties.id)['tot' + year])
                 );
         };
+
         var stateFill = function(selection) {
             var year = this;
             selection.style('fill', (d, i) =>
                 counts[year].d[i] > counts[year].r[i] ? redblue.range()[0] : redblue.range()[2]
             );
         };
+
         var votes = elections.map(function(year) {
             var dev = getEv(year, 'd'), rev = getEv(year, 'r');
             return {
