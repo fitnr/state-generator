@@ -129,7 +129,10 @@ function program(error, topo, csv) {
     function add_connection(id1, id2) {
         var idx1 = ids.indexOf(id1);
         var idx2 = ids.indexOf(id2);
-        if (idx1 === -1 || idx2 === -1) return;
+        if (idx1 === -1 || idx2 === -1) {
+            console.log(id1, id2);
+            return;
+        }
         neighbors[idx2].push(idx1);
         neighbors[idx1].push(idx2);
     }
