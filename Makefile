@@ -9,8 +9,10 @@ main.js: js/script.js $(SRC) rollup.js .babelrc
 	rollup -c rollup.js -f iife -n stateGenerator -g d3:d3 $< -o $@
 
 data/counties.json: geo/counties.geojson | data
-	geo2topo $< | \
-	toposimplify -fp 0.045 -o $@
+	geoproject 'd3.geoAlbersUsa().scale(1900).translate([750, 500])' $< | \
+	geo2topo -q 1e5 | \
+	toposimplify -fp 6 | \
+	sed 's/"objects":{"-"/"objects":{"counties"/g' > $@
 
 geo/counties.geojson: geo/counties.shp $(foreach x,90 00 10,dbf/DEC_$x.dbf)
 	@rm -f $@

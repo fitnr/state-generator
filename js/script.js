@@ -14,12 +14,7 @@ var svg = d3.select("body")
     .attr('height', height)
     .attr('width', width);
 
-var projection = d3.geoAlbersUsa()
-    .scale(1900)
-    .translate([750, 500]);
-
-var path = d3.geoPath()
-    .projection(projection);
+var path = d3.geoPath();
 
 var candidates = {
     '00' : {
