@@ -269,7 +269,7 @@ function program(error, topo, csv) {
             selection
                 .style('fill', function(d) {
                     var x = results.get(d.properties.id);
-                    return redblue(+x['r' + year] / (+x['r' + year] + Number(x['d' + year])));
+                    return redblue(+x['r' + year] / (+x['r' + year] + (+x['d' + year])));
                 })
                 .style('fill-opacity', d =>
                     opacity(results.get(d.properties.id)['tot' + year])
@@ -340,7 +340,6 @@ function program(error, topo, csv) {
 
     d3.selectAll('#button-run').on('click', run);
     run();
-
 }
 
 var q = d3.queue()
