@@ -66,12 +66,12 @@ var redblue = d3.scaleLinear()
 // probability functions
 var countScale = d3.scalePow()
     .exponent(2)
-    .domain([3, 10, 300])
+    .domain([3, 10, 250])
     .range([0, 0.001, 1]);
 
 var populationScale = d3.scalePow()
     .exponent(2)
-    .domain([100000, 10e6])
+    .domain([100000, 30e6])
     .clamp(true)
     .range([0, 1]);
 
@@ -99,7 +99,8 @@ function make(features, neighbors) {
 
     var seedindices = Object.keys(byOriginalState).map(d => random(byOriginalState[d]));
 
-    var maker = new stateMaker(features, neighbors, {prob: prob});
+    var opts = {prob: prob, popField: '10'};
+    var maker = new stateMaker(features, neighbors, opts);
     maker.addState([features.indexOf(map.get('02'))]);
     maker.addState([features.indexOf(map.get('15'))]);
 
@@ -166,7 +167,7 @@ function program(error, topo, csv) {
 
     tables.append('thead').append('tr')
             .selectAll('th')
-            .data(['candidate', 'popular', 'electoral', 'n']).enter()
+            .data(['candidate', 'popular', 'electoral', 'states']).enter()
             .append('th')
             .text(d => d);
 

@@ -9,9 +9,10 @@ function range(n) {
 function random(list) { return list[Math.floor(Math.random() * list.length)]; }
 
 function stateMaker(features, neighbors, options) {
-    this.prob = (options || {}).prob || function() { return Math.random(); };
+    options = options || {};
+    this.prob = options.prob || function() { return Math.random(); };
+    this.popField = options.popField || 'pop';
     this.neighbors = neighbors;
-    this.originalNeighbors = neighbors;
     this.features = features;
     this._states = [];
     this.countyMaps = {
@@ -88,16 +89,17 @@ stateMaker.prototype.divideCountry = function(seeds, options) {
     seeds.forEach(function(seed) { this.addState([seed]); }, this);
 
     var states = seeds.map(this.stateOf, this),
-        seedlings = true,
-        englarge = (state => this.enlargeState(state, options));
+        active = true,
+        statuses = states.map(function(_, i) { return this.frozen.has(i) ? false : true; }, this);
 
-    // removed from the map
-    // this is sloow
-    // if (x) this.landlockedBy(state)
-    //     .forEach(function(c) { this.addToState(c, state); }, this);
+    function enlarge(state, i) {
+        return statuses[i] ? this.enlargeState(state, options) : false;
+    }
 
-    while (seedlings === true)
-        seedlings = states.map(englarge).some(d => d);
+    while (active === true) {
+        statuses = states.map(enlarge, this);
+        active = statuses.some(d => d);
+    }
 
     // Add unselected counties to neighboring states
     if (options.assignOrphans)
@@ -117,7 +119,7 @@ stateMaker.prototype.enlargeState = function(state, options) {
 stateMaker.prototype.pickCounty = function(countySet, options) {
     var prob = (options || {}).prob || this.prob;
     var self = this;
-    var pop = this.sum(countySet, 'pop');
+    var pop = this.sum(countySet, this.popField);
     var probability = prob(countySet.size, pop);
 
     if (Math.random() < probability) {
@@ -136,9 +138,7 @@ stateMaker.prototype.pickCounty = function(countySet, options) {
             //     .forEach(function(d) { this.noNeighbors.add(d); }, this);
             return false;
         }
-
-        var u = random(currentNeighbors);
-        return u;
+        else return random(currentNeighbors);
     }
 };
 
