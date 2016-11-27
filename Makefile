@@ -5,8 +5,11 @@ all: main.js data/results.csv data/counties.json
 
 SRC = $(filter-out js/script.js,$(wildcard js/*.js))
 
+main.min.js: main.js
+	uglifyjs $< -cmo $@ 
+
 main.js: js/script.js $(SRC) rollup.js .babelrc
-	rollup -c rollup.js -f iife -n stateGenerator -g d3:d3 $< -o $@
+	rollup -c rollup.js -f iife -n sg -g d3:d3 $< -o $@
 
 data/counties.json: geo/counties.geojson | data
 	geo2topo -q 1e5 counties=$< | \
