@@ -81,6 +81,9 @@ function prob(count, pop) {
 
 var fmt = d3.format(',');
 
+var stateCount = 48,
+    reps = 436;
+
 function census(year) {
     return 2000 + (Math.floor((+year - 1) / 10) * 10);
 }
@@ -173,6 +176,8 @@ function program(error, topo, csv) {
 
     var tbodies = tables.append('tbody');
 
+    var win = Math.ceil(3 + stateCount + reps/2);
+
     /**
      * Run the map
      */
@@ -189,9 +194,9 @@ function program(error, topo, csv) {
         ), {});
 
         var evs = {
-            1990: maker.ev(436, '90'),
-            2000: maker.ev(436, '00'),
-            2010: maker.ev(436, '10'),
+            1990: maker.ev(reps, '90'),
+            2000: maker.ev(reps, '00'),
+            2010: maker.ev(reps, '10'),
         };
 
         // return the number list of EV total by state for given year, party
@@ -302,7 +307,7 @@ function program(error, topo, csv) {
             .data(d => d.data, d => d[0]);
 
         var td = tr.merge(tr.enter().append('tr'))
-            .attr('class', d => d[2] > 269 ? 'winner' : '')
+            .attr('class', d => d[2] >= win ? 'winner' : '')
             .selectAll('td')
             .data(d => d);
 
