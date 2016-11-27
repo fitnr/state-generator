@@ -90,17 +90,7 @@ function census(year) {
 
 function make(features, neighbors) {
     var map = d3.map(features, d => d.properties.id);
-
-    var byOriginalState = features.reduce(function(obj, d, i) {
-            if (['02', '15', '11001'].indexOf(d.properties.id) > -1)
-                return obj;
-            var key = d.properties.id.substr(0, 2);
-            obj[key] = obj[key] || [];
-            obj[key].push(i);
-            return obj;
-        }, {});
-
-    var seedindices = Object.keys(byOriginalState).map(d => random(byOriginalState[d]));
+    var seedindices = d3.shuffle(d3.range(2, features.length)).slice(0, stateCount);
 
     var opts = {prob: prob, popField: '10'};
     var maker = new stateMaker(features, neighbors, opts);
