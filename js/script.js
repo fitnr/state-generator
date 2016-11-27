@@ -351,7 +351,7 @@ function program(error, topo, csv) {
     run();
 }
 
-var q = d3.queue()
+d3.queue()
     .defer(d3.json, 'data/counties.json')
     .defer(d3.csv, 'data/results.csv')
     .await(program);

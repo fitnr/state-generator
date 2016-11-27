@@ -14,7 +14,6 @@ module.exports = function(states, options) {
         var c = allocations[i];
         return d / Math.pow(c * (c + 1), 0.5);
     }
-    function statePriority(d, i) { return priorities[i]; }
     function sum(a, b) { return a + b; }
 
     while (allocated < reps) {

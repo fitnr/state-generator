@@ -20,7 +20,6 @@ function stateMaker(features, neighbors, options) {
         index: {},
     };
     this.frozen = new Set();
-    // this.noNeighbors = new Set();
     this.unselected = new Set(range(this.features.length));
     return this;
 }
@@ -134,33 +133,11 @@ stateMaker.prototype.pickCounty = function(countySet, options) {
 
         if (currentNeighbors.length === 0) {
             // console.log('no neighbors!');
-            // countySet.values()
-            //     .forEach(function(d) { this.noNeighbors.add(d); }, this);
             return false;
         }
         else return random(currentNeighbors);
     }
 };
-
-/*
-// find counties landlocked by a particular states
-stateMaker.prototype.landlockedBy = function(state) {
-    return this.unselected.values().filter(function(county) {
-        var set = new Set(this.getNeighborStates(county));
-        return set.size === 1 && set.has(state);
-    }, this);
-};
-
-stateMaker.prototype.generateState = function(seed) {
-    // assumes seed already is a state
-    var state = this.stateOf(seed) || this.addState([seed]);
-    while (true)
-        if (this.enlargeState(state) === false) break;
-    // find landlocked counties and add them to this state
-    this.landlockedBy(state)
-        .forEach(function(c) { this.addToState(c, state); }, this);
-};
-*/
 
 stateMaker.prototype.ev = function(reps, key) {
     reps = reps || 436;
