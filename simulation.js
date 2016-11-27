@@ -15,7 +15,8 @@ var parser = new ArgumentParser({version: '0.1'});
 parser.addArgument(['topojson']);
 parser.addArgument(['csv']);
 parser.addArgument(['-e', '--seeds'], {help: 'list of seed counties'});
-parser.addArgument(['--random-seeds'], {action: 'storeTrue', help: 'Use completely random seed list'});
+parser.addArgument(['--states'], {help: 'number of states', type: parseInt, defaultValue: 48});
+parser.addArgument(['-r', '--random-seeds'], {action: 'storeTrue', help: 'Use completely random seed list'});
 parser.addArgument(['-s', '--sims'], {help: 'number of simulations', type: parseInt, defaultValue: 100});
 
 var program = parser.parseArgs();
@@ -56,7 +57,7 @@ function simulate(results, features, neighbors) {
 
     // totally random seeds
     else if (program.random_seeds)
-        seedIndices = d3.shuffle(d3.range(2, features.length)).slice(0, 48);
+        seedIndices = d3.shuffle(d3.range(2, features.length)).slice(0, program.states);
 
     // pick one random county from each state
     else {
