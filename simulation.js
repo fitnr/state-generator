@@ -41,8 +41,18 @@ function simulate(results, features, neighbors) {
     var seedIndices,
         mapfeatures = d3.map(features, d => d.properties.id);
 
-    if (program.seeds)
-        seedIndices = d3.shuffle(seeds).map(d => features.indexOf(mapfeatures.get(d)));
+    if (program.seeds) {
+        seedIndices = program.seeds.split(',').map(d => features.indexOf(mapfeatures.get(d)));
+
+        var i = seedIndices.indexOf(-1);
+        while (i > -1) {
+            console.log("Couldn't find", program.seeds.split(',')[i]);
+            seedIndices.splice(i, 1);
+            i = seedIndices.indexOf(-1);
+        }
+
+        seedIndices = d3.shuffle(seedIndices);
+    }
 
     // totally random seeds
     else if (program.random_seeds)
@@ -113,10 +123,10 @@ function summary(data) {
         return {
             year: year,
             dWin: rows.filter(row => row.dev > row.rev).length,
-            devs: rows.reduce((obj, row) => (obj[row.dev] = (obj[row.dev] + 1) || 1, obj), {}),
             ties: rows.filter(row => row.dev === row.rev).length,
             dStateAvg: d3.sum(rows.map(row => row.dcount)) / rows.length,
             dEvAvg: d3.sum(rows.map(row => row.dev)) / rows.length,
+            devs: rows.reduce((obj, row) => (obj[row.dev] = (obj[row.dev] + 1) || 1, obj), {}),
         };
     });
 }
