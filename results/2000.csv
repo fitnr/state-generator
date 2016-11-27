@@ -1734,16 +1734,16 @@ FIPS,STATE_NAME,NAME,GORE,BUSH,TOTAL_VOTE
 32031,Nevada,Washoe,52080,63624,122264
 32033,Nevada,White Pine,1069,2234,3543
 32510,Nevada,Carson City,7342,11064,19418
-33001,New Hampshire,Belknap,14799,10719,26795
-33003,New Hampshire,Carroll,12597,9852,23879
-33005,New Hampshire,Cheshire,13793,17382,33395
-33007,New Hampshire,Coos,7329,6570,14600
-33009,New Hampshire,Grafton,18092,18326,38733
-33011,New Hampshire,Hillsborough,80649,77625,165761
-33013,New Hampshire,Merrimack,30028,30622,63684
-33015,New Hampshire,Rockingham,65860,61628,134173
-33017,New Hampshire,Strafford,21108,25400,49393
-33019,New Hampshire,Sullivan,9304,8224,18668
+33001,New Hampshire,Belknap,10719,14799,26795
+33003,New Hampshire,Carroll,9852,12597,23879
+33005,New Hampshire,Cheshire,17382,13793,33395
+33007,New Hampshire,Coos,6570,7329,14600
+33009,New Hampshire,Grafton,18326,18092,38733
+33011,New Hampshire,Hillsborough,77625,80649,165761
+33013,New Hampshire,Merrimack,30622,30028,63684
+33015,New Hampshire,Rockingham,61628,65860,134173
+33017,New Hampshire,Strafford,25400,21108,49393
+33019,New Hampshire,Sullivan,8224,9304,18668
 34001,New Jersey,Atlantic,49808,33500,85850
 34003,New Jersey,Bergen,190662,143842,345164
 34005,New Jersey,Burlington,95077,68290,168903
