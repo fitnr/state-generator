@@ -352,6 +352,7 @@ function program(error, topo, csv) {
                     .call(countyFill.bind(year));
                 cg.style('display', 'inherit');
                 states.style('fill-opacity', 0);
+                text.style('display', 'none');
 
             } else {
                 states
@@ -359,6 +360,7 @@ function program(error, topo, csv) {
                     .style('fill-opacity', null);
 
                 cg.style('display', 'none');
+                text.style('display', null);
             }
         }
 
