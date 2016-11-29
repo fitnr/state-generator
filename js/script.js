@@ -131,7 +131,7 @@ function make(features, neighbors, options) {
 
     // extra rep for D.C.
     maker.freezeState(dc)
-        .divideCountry(seedindices, {assignOrphans: true});
+        .divideCountry(seedindices);
 
     return maker;        
 }

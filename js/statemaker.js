@@ -64,14 +64,14 @@ stateMaker.prototype.addToState = function(county, state) {
 };
 
 /** Get the states that neighbor a county. Ignores frozen states, but passes 'undefined' */
-stateMaker.prototype.getNeighborStates = function(county) {
+stateMaker.prototype.getNeighbors = function(county) {
     return this.neighbors[county]
         .map(neighbor => this.stateOf(neighbor) || -1)
         .filter(state => !this.frozen.has(state));
 };
 
-stateMaker.prototype.assignOrphans = function(county) {
-    var neighborStates = this.getNeighborStates(county).filter(state => state > -1);
+stateMaker.prototype.assign = function(county) {
+    var neighborStates = this.getNeighbors(county).filter(state => state > -1);
     if (neighborStates.length) this.addToState(county, random(neighborStates));
 };
 
@@ -84,7 +84,7 @@ stateMaker.prototype.freezeState = function(d) {
  * divide the country into max <n> states
  */
 stateMaker.prototype.divideCountry = function(seeds, options) {
-    options = options || {assignOrphans: true};
+    options = options || {assign: true};
     seeds.forEach(function(seed) { this.addState([seed]); }, this);
 
     var states = seeds.map(this.stateOf, this),
@@ -101,9 +101,9 @@ stateMaker.prototype.divideCountry = function(seeds, options) {
     }
 
     // Add unselected counties to neighboring states
-    if (options.assignOrphans)
+    if (options.assign)
         while (this.unselected.size > 0)
-            Array.from(this.unselected).forEach(this.assignOrphans, this);
+            Array.from(this.unselected).forEach(this.assign, this);
 
     return this._states;
 };
