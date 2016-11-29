@@ -9,8 +9,7 @@ function random(list) {
 var height = 1000,
     width = 1900;
 
-var svg = d3.select("body")
-    .append('svg')
+var svg = d3.select("#map")
     .attr('height', height)
     .attr('width', width);
 
@@ -88,9 +87,40 @@ function census(year) {
     return 2000 + (Math.floor((+year - 1) / 10) * 10);
 }
 
-function make(features, neighbors) {
+function seeds(method, features) {
+    var seeds;
+    var ids;
+
+    if (method === 'large' || method === 'state')
+        ids = features.map(d => d.properties.id);
+
+    if (method === 'large') {
+        seeds = '06037|17031|48201|04013|06073|12086|36047|48113|53033|32003|48439|06085|12011|26163|48029|06001|42101|25017|36103|06067|36005|12099|12057|39035|42003|12095|39049|27053|51059|06013|49035|24031|29189|04019|37119|13121|55079|37183|06019|47157|09001|12103|36029|18097|09003|12031|09009|41051'
+            .split('|')
+            .map(geoid => ids.indexOf(geoid));
+    }
+    else if (method === 'state') {
+        var byOriginalState = ids.reduce(function(obj, geoid, i) {
+                if (['02', '15', '11001'].indexOf(geoid) > -1)
+                    return obj;
+                var key = geoid.substr(0, 2);
+                obj[key] = obj[key] || [];
+                obj[key].push(i);
+                return obj;
+            }, {});
+
+        seeds = Object.keys(byOriginalState).map(d => random(byOriginalState[d]));
+    }
+    else {
+        seeds = d3.shuffle(d3.range(2, features.length)).slice(0, stateCount);
+    }
+
+    return seeds;
+}
+
+function make(features, neighbors, options) {
     var map = d3.map(features, d => d.properties.id);
-    var seedindices = d3.shuffle(d3.range(2, features.length)).slice(0, stateCount);
+    var seedindices = seeds((options || {}).method, features);
 
     var opts = {prob: prob, popField: '10'};
     var maker = new stateMaker(features, neighbors, opts);
@@ -174,7 +204,8 @@ function program(error, topo, csv) {
     function run() {
         if (d3.event) d3.event.preventDefault();
 
-        var maker = make(features, neighbors);
+        var method = document.querySelector('[name=method]:checked').value;
+        var maker = make(features, neighbors, {method: method});
 
         var counts = elections.reduce((obj, y) => (
             obj[y] = {
