@@ -29,7 +29,8 @@ geo/counties.geojson: geo/counties.shp $(foreach x,90 00 10,dbf/DEC_$x.dbf)
 
 data/results.csv: $(foreach x,00 04 08 12 16,dbf/20$(x).dbf) | data
 	ogr2ogr -f CSV $@ $(<D) -dialect sqlite \
-		-sql 'SELECT a.*, b.r12, b.d12, b.tot12, c.r08, c.d08, c.tot08, \
+		-sql 'SELECT a.GEOID GEOID, a.rep r16, a.dem d16, a.tot tot16, \
+		b.r12, b.d12, b.tot12, c.r08, c.d08, c.tot08, \
 		d.r04, d.d04, d.tot04, e.r00, e.d00, e.tot00 \
 		FROM "2016" a \
 		LEFT JOIN "2012" b USING (GEOID) LEFT JOIN "2008" c USING (GEOID) \
@@ -38,7 +39,7 @@ data/results.csv: $(foreach x,00 04 08 12 16,dbf/20$(x).dbf) | data
 
 dbf/2016.dbf: results/2016.csv | dbf
 	@rm -f $(basename $@).{idm,ind}
-	ogr2ogr $@ $< -select GEOID,NAME,tot16,r16,d16 -where "GEOID != '02000'"
+	ogr2ogr $@ $< -select GEOID,NAME,tot,rep,dem -where "GEOID != '02000'"
 	@rm -f $(basename $@).qix
 	ogrinfo $(@D) -sql 'CREATE INDEX ON "2016" USING GEOID'
 
