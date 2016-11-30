@@ -13,19 +13,21 @@ main.min.js: main.js
 main.js: js/script.js $(SRC) rollup.js .babelrc
 	rollup -c rollup.js -f iife -n sg -g d3:d3 $< -o $@
 
-data/counties.json: geo/counties.geojson | data
+data/counties.json: geo/counties-albers.geojson | data
 	$(NM)/geo2topo -q 1e5 counties=$< | \
 	$(NM)/toposimplify -fp 6 -o $@
 
+geo/counties-albers.geojson: geo/counties.geojson
+	$(NM)/geoproject 'd3.geoAlbersUsa().scale(1400).translate([525, 325])' $< -o $@
+
 geo/counties.geojson: geo/counties.shp $(foreach x,90 00 10,dbf/DEC_$x.dbf)
-	ogr2ogr /dev/stdout $< -f GeoJSON -dialect sqlite \
+	ogr2ogr $@ $< -f GeoJSON -dialect sqlite \
 		-sql "SELECT Geometry, GEOID id, a.NAME n, CAST(dec90.P01 as INTEGER) AS '90', \
 			CAST(dec00.P01 as INTEGER) AS '00', CAST(dec10.P01 as INTEGER) AS '10' \
 			FROM counties a \
 			LEFT JOIN 'dbf'.DEC_90 AS dec90 USING (GEOID) \
 			LEFT JOIN 'dbf'.DEC_00 AS dec00 USING (GEOID) \
-			LEFT JOIN 'dbf'.DEC_10 AS dec10 USING (GEOID)" | \
-	$(NM)/geoproject -o $@ 'd3.geoAlbersUsa().scale(1900).translate([750, 500])'
+			LEFT JOIN 'dbf'.DEC_10 AS dec10 USING (GEOID)" 
 
 data/results.csv: $(foreach x,00 04 08 12 16,dbf/20$(x).dbf) | data
 	ogr2ogr -f CSV $@ $(<D) -dialect sqlite \
