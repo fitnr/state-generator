@@ -9,7 +9,15 @@ function random(list) {
 var height = 1100,
     width = 1500;
 
-var barheight = 12;
+var margins = {
+    left: 30,
+    right: 0,
+    top: 0,
+    bottom: 0,
+};
+
+var barheight = 18,
+    barbuf = 8;
 
 var svg = d3.select("#map")
     .attr('height', height)
@@ -54,6 +62,8 @@ var forceNeighbors = [
     ['53073', '53055'],
 ];
 
+var commaize = d3.format(',');
+
 var opacity = d3.scaleLinear()
     .domain([1, 2e5])
     .range([0.15, 1])
@@ -65,7 +75,7 @@ var redblue = d3.scaleLinear()
     .range(['#2166ac', '#964372', '#e31a1c']);
 
 var x = d3.scaleLinear()
-    .range([0, width])
+    .range([0, width - margins.left - margins.right])
     .domain([0, 538]);
 
 // probability functions
@@ -190,10 +200,13 @@ function program(error, topo, csv) {
 
     // create bar charts
     var bars = svg.append('g').classed('bars', true)
-        .attr('transform', 'translate(0,' + (height - (elections.length * (barheight + 5))) + ')');
+        .attr('transform', 'translate(' + [margins.left, height - (elections.length * (barheight + barbuf))] + ')');
 
-    var total = reps + (3 + stateCount) * 2;
-    var win = Math.ceil(total/2);
+    var total = reps + (3 + stateCount) * 2,
+        win = Math.ceil(total/2);
+
+    var transition = d3.transition()
+        .duration(250);
 
     /**
      * Run the map
@@ -310,8 +323,8 @@ function program(error, topo, csv) {
 
         var votes = elections.map(function(year) {
             var ev = {
-                d: getEv(year, 'd'),
                 r: getEv(year, 'r'),
+                d: getEv(year, 'd'),
             };
             return {
                 year: year,
@@ -333,34 +346,57 @@ function program(error, topo, csv) {
 
         var barEnter = bar.enter()
             .append('g')
-            .attr('transform', (_, i) => 'translate(0,' + (i * (barheight + 5)) + ')' );
+            .attr('transform', (_, i) => 'translate(0,' + (i * (barheight + barbuf)) + ')' );
 
         var rects = bar
             .merge(barEnter)
-            .selectAll('rect')
+            .selectAll('.bar')
             .data(d => d.data, d => d.name);
 
         var newRects = rects.enter()
-            .append('rect')
-            .attr('name', d => d.name)
-            .attr('class', d => d.party)
+            .append('g')
+            .attr('class', d => 'bar bar-' + d.party)
+            .attr('name', d => d.name);
+        
+        newRects.append('rect')
             .attr('height', barheight);
 
-        rects
+        newRects.append('text')
+            .text(d => d.name)
+            .attr('dx', (_, i) => i === 0 ? 2 : -2)
+            .attr('x', (_, i) => i === 0 ? 0 : x(total));
+
+        newRects.append('text')
+            .text(d => commaize(d.vote))
+            .attr('dx', 2)
+            .attr('x', (_, i) => i === 0 ? 0 : x(total))
+            .attr('dx', (_, i) => i === 0 ? 50 : -50);
+
+        newRects.append('text')
+            .text(d => d.ev)
+            .attr('x', (d, i) => i === 0 ? x(d.ev) : x(total - d.ev))
+            .attr('dx', (d, i) => i === 0 ? -2 : 2)
+            .attr('class', 'ev');
+
+        newRects.selectAll('text')
+            .attr('dy', '1em');
+
+        rects = rects
             .merge(newRects)
+            .select('rect')
+            .transition(transition)
             .attr('width', d => x(d.ev))
             .filter((d, i) => i === 1)
-                .attr('transform', d => 'translate(' + x(total - d.ev) + ')');
+            .attr('transform', d => 'translate(' + x(total - d.ev) + ')');
 
         barEnter.append('text')
-            .text(d => d.year)
-            .style('fill', 'white')
-            .attr('dx', '6px')
+            .text(d => '20' + d.year)
+            .attr('dx', -margins.left)
             .attr('dy', '1em');
 
         barEnter.append('line')
             .attr('y1', -1)
-            .attr('y2', barheight+2)
+            .attr('y2', barheight + 2)
             .attr('x1', x(win))
             .attr('x2', x(win));
 
@@ -393,10 +429,12 @@ function program(error, topo, csv) {
         d3.selectAll('[name=view], [name=year]')
             .on('change', null)
             .on('change', draw);
+
         draw();
     }
 
     d3.selectAll('#button-run').on('click', run);
+
     run();
 }
 

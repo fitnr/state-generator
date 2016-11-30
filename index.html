@@ -70,19 +70,30 @@
             stroke: black;
             stroke-width: 1.5px;
         }
-        rect.d {
+        .bars text {
+            font-size: 12px;
+        }
+        .bar text {
+            fill: white;
+        }
+        .bar-d .ev,
+        .bar-r text {
+            text-anchor: end;
+        }
+        .bar-r .ev {
+            text-anchor: start;
+        }
+        .bar-d rect {
             fill: #2166ac;
         }
-        rect.r {
+        .bar-r rect {
             fill: #e31a1c;
-        }
-        rect.t {
-            fill: yellow;
         }
     </style>
 </head>
 <body>
     <form action="">
+        <strong>Show</strong>
         <fieldset>
             <label for="view-state">
                 <input type="radio" class="form-control-view" id="view-state" name="view" value="state" checked> states
@@ -98,6 +109,10 @@
             <label for="year-04"><input class="form-control-year" name="year" id="year-04" value="04" type="radio">2004</label>
             <label for="year-00"><input class="form-control-year" name="year" id="year-00" value="00" type="radio">2000</label>
         </fieldset>
+    </form>
+
+    <form action="">
+        <strong>Redraw map</strong>
         <fieldset>
             Seed counties:
             <label for="method-random">
