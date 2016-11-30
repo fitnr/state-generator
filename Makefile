@@ -1,5 +1,7 @@
 DIR = /Volumes/oeil/gis/data/usa/census/2014
 
+NM = node_modules/.bin
+
 .PHONY: all
 all: main.js data/results.csv data/counties.json
 
@@ -12,8 +14,8 @@ main.js: js/script.js $(SRC) rollup.js .babelrc
 	rollup -c rollup.js -f iife -n sg -g d3:d3 $< -o $@
 
 data/counties.json: geo/counties.geojson | data
-	geo2topo -q 1e5 counties=$< | \
-	toposimplify -fp 6 -o $@
+	$(NM)/geo2topo -q 1e5 counties=$< | \
+	$(NM)/toposimplify -fp 6 -o $@
 
 geo/counties.geojson: geo/counties.shp $(foreach x,90 00 10,dbf/DEC_$x.dbf)
 	ogr2ogr /dev/stdout $< -f GeoJSON -dialect sqlite \
@@ -23,7 +25,7 @@ geo/counties.geojson: geo/counties.shp $(foreach x,90 00 10,dbf/DEC_$x.dbf)
 			LEFT JOIN 'dbf'.DEC_90 AS dec90 USING (GEOID) \
 			LEFT JOIN 'dbf'.DEC_00 AS dec00 USING (GEOID) \
 			LEFT JOIN 'dbf'.DEC_10 AS dec10 USING (GEOID)" | \
-	geoproject -o $@ 'd3.geoAlbersUsa().scale(1900).translate([750, 500])'
+	$(NM)/geoproject -o $@ 'd3.geoAlbersUsa().scale(1900).translate([750, 500])'
 
 data/results.csv: $(foreach x,00 04 08 12 16,dbf/20$(x).dbf) | data
 	ogr2ogr -f CSV $@ $(<D) -dialect sqlite \
@@ -130,7 +132,7 @@ dbf/DEC_10.dbf dbf/DEC_00.dbf: dbf/%.dbf: census/%.csv | dbf
 	ogr2ogr $@ $<
 	ogrinfo $(@D) -sql 'CREATE INDEX ON $(basename $(@F)) USING GEOID'
 
-dbf/DEC_90.dbf: census/DEC_90.csv
+dbf/DEC_90.dbf: census/DEC_90.csv | dbf
 	@rm -f $(basename $@).{idm,ind}
 	ogr2ogr $@ $<
 	ogrinfo $(@D) -dialect sqlite -sql "UPDATE $(basename $(@F)) SET \

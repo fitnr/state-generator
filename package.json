@@ -7,9 +7,10 @@
     "argparse": "^1.0.9",
     "csv": "^1.1.0",
     "d3": "^4.3.0",
-    "d3-scale": "^1.0.3",
+    "d3-geo-projection": "^1.2.1",
     "topojson": "^2.0.0",
-    "topojson-client": "^2.1.0"
+    "topojson-client": "^2.1.0",
+    "topojson-simplify": "^2.0.0"
   },
   "devDependencies": {
     "babel-preset-es2015-rollup": "^1.2.0",
