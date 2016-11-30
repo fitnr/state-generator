@@ -94,8 +94,6 @@ function prob(count, pop) {
     return (countScale(count) + populationScale(pop)) / 2;
 }
 
-var fmt = d3.format(',');
-
 var stateCount = 48,
     reps = 436;
 
