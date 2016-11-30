@@ -6,8 +6,8 @@ function random(list) {
     return list[Math.floor(Math.random() * list.length)];
 }
 
-var height = 1100,
-    width = 1500;
+var height = 825,
+    width = 1050;
 
 var margins = {
     left: 30,
@@ -179,6 +179,9 @@ function program(error, topo, csv) {
         ));
     };
 
+    var total = reps + (3 + stateCount) * 2,
+        win = Math.ceil(total/2);
+
     svg.append('g')
         .attr('class', 'counties')
         .selectAll('path')
@@ -200,8 +203,11 @@ function program(error, topo, csv) {
     var bars = svg.append('g').classed('bars', true)
         .attr('transform', 'translate(' + [margins.left, height - (elections.length * (barheight + barbuf))] + ')');
 
-    var total = reps + (3 + stateCount) * 2,
-        win = Math.ceil(total/2);
+    bars.append('line')
+        .attr('y1', -barbuf)
+        .attr('y2', height - (elections.length * (barheight + barbuf)))
+        .attr('x1', x(win))
+        .attr('x2', x(win));
 
     var transition = d3.transition()
         .duration(250);
@@ -361,7 +367,7 @@ function program(error, topo, csv) {
 
         newRects.append('text')
             .text(d => d.name)
-            .attr('dx', (_, i) => i === 0 ? 2 : -2)
+            .attr('dx', (_, i) => i === 0 ? 4 : -4)
             .attr('x', (_, i) => i === 0 ? 0 : x(total));
 
         newRects.append('text')
@@ -381,6 +387,7 @@ function program(error, topo, csv) {
 
         rects = rects
             .merge(newRects)
+            .classed('win', d => d.ev >= win)
             .select('rect')
             .transition(transition)
             .attr('width', d => x(d.ev))
@@ -391,12 +398,6 @@ function program(error, topo, csv) {
             .text(d => '20' + d.year)
             .attr('dx', -margins.left)
             .attr('dy', '1em');
-
-        barEnter.append('line')
-            .attr('y1', -1)
-            .attr('y2', barheight + 2)
-            .attr('x1', x(win))
-            .attr('x2', x(win));
 
         function draw() {
             var geography = document.querySelector('[name=view]:checked').value;
