@@ -11,6 +11,9 @@
         body {
             font-family: sans-serif;
         }
+        text {
+            font-size: 10px;
+        }
         .counties path {
             stroke-width: 0.25;
             stroke: white;
@@ -31,7 +34,6 @@
         .labels text {
             fill: #444;
             font-family: sans-serif;
-            font-size: 10px;
             text-anchor: middle;
             cursor: default;
         }
@@ -64,12 +66,15 @@
             background-color: white;
             position: absolute;
         }
-
+        .bars line {
+            stroke: black;
+            stroke-width: 1.5px;
+        }
         rect.d {
-            fill: blue;
+            fill: #2166ac;
         }
         rect.r {
-            fill: red;
+            fill: #e31a1c;
         }
         rect.t {
             fill: yellow;

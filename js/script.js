@@ -6,8 +6,10 @@ function random(list) {
     return list[Math.floor(Math.random() * list.length)];
 }
 
-var height = 1000,
-    width = 1900;
+var height = 1100,
+    width = 1500;
+
+var barheight = 12;
 
 var svg = d3.select("#map")
     .attr('height', height)
@@ -61,6 +63,10 @@ var redblue = d3.scaleLinear()
     .clamp(true)
     .domain([0.25, 0.5, 0.75])
     .range(['#2166ac', '#964372', '#e31a1c']);
+
+var x = d3.scaleLinear()
+    .range([0, width])
+    .domain([0, 538]);
 
 // probability functions
 var countScale = d3.scalePow()
@@ -141,8 +147,8 @@ function program(error, topo, csv) {
 
     var features = topojson.feature(topo, topo.objects.counties).features;
     var neighbors = topojson.neighbors(topo.objects.counties.geometries);
-    var results = d3.map(csv, function(d) { return d.GEOID; });
-    var elections = Object.keys(candidates);
+    var results = d3.map(csv, d => d.GEOID);
+    var elections = Object.keys(candidates).sort((a, b) => a - b);
     var ids = features.map(d => d.properties.id);
 
     function add_connection(id1, id2) {
@@ -182,21 +188,12 @@ function program(error, topo, csv) {
 
     var labels = svg.append('g').attr('class', 'labels');
 
-    // create tables
-    var tables = d3.select('.tables').selectAll('table')
-        .data(elections).enter()
-        .append('table')
-        .sort((a, b) => b - a);
+    // create bar charts
+    var bars = svg.append('g').classed('bars', true)
+        .attr('transform', 'translate(0,' + (height - (elections.length * (barheight + 5))) + ')');
 
-    tables.append('thead').append('tr')
-            .selectAll('th')
-            .data(['candidate', 'popular', 'electoral', 'states']).enter()
-            .append('th')
-            .text(d => d);
-
-    var tbodies = tables.append('tbody');
-
-    var win = Math.ceil(3 + stateCount + reps/2);
+    var total = reps + (3 + stateCount) * 2;
+    var win = Math.ceil(total/2);
 
     /**
      * Run the map
@@ -312,31 +309,60 @@ function program(error, topo, csv) {
         };
 
         var votes = elections.map(function(year) {
-            var dev = getEv(year, 'd'), rev = getEv(year, 'r');
+            var ev = {
+                d: getEv(year, 'd'),
+                r: getEv(year, 'r'),
+            };
             return {
                 year: year,
-                data: [
-                    [candidates[year].d, d3.sum(counts[year].d), d3.sum(dev), dev.filter(x => x > 0).length],
-                    [candidates[year].r, d3.sum(counts[year].r), d3.sum(rev), rev.filter(x => x > 0).length]
-            ]};
+                data: ['d', 'r'].map(x => ({
+                        name: candidates[year][x],
+                        party: x,
+                        vote: d3.sum(counts[year][x]),
+                        ev: d3.sum(ev[x]),
+                        state: ev[x].filter(y => y > 0).length,
+                    })
+                )
+            };
         });
 
-        // data tables
-        var tb = tbodies.data(votes, d => d.year || d);
+        // bar charts
 
-        var tr = tb.selectAll('tr')
-            .data(d => d.data, d => d[0]);
+        var bar = bars.selectAll('g')
+            .data(votes, d => d.year);
 
-        var td = tr.merge(tr.enter().append('tr'))
-            .attr('class', d => d[2] >= win ? 'winner' : '')
-            .selectAll('td')
-            .data(d => d);
+        var barEnter = bar.enter()
+            .append('g')
+            .attr('transform', (_, i) => 'translate(0,' + (i * (barheight + 5)) + ')' );
 
-        td.merge(td.enter().append('td'))
-            .text(function(d) {
-                var x = fmt(d);
-                return x === 'NaN' ? d : x;
-            });
+        var rects = bar
+            .merge(barEnter)
+            .selectAll('rect')
+            .data(d => d.data, d => d.name);
+
+        var newRects = rects.enter()
+            .append('rect')
+            .attr('name', d => d.name)
+            .attr('class', d => d.party)
+            .attr('height', barheight);
+
+        rects
+            .merge(newRects)
+            .attr('width', d => x(d.ev))
+            .filter((d, i) => i === 1)
+                .attr('transform', d => 'translate(' + x(total - d.ev) + ')');
+
+        barEnter.append('text')
+            .text(d => d.year)
+            .style('fill', 'white')
+            .attr('dx', '6px')
+            .attr('dy', '1em');
+
+        barEnter.append('line')
+            .attr('y1', -1)
+            .attr('y2', barheight+2)
+            .attr('x1', x(win))
+            .attr('x2', x(win));
 
         function draw() {
             var geography = document.querySelector('[name=view]:checked').value;
