@@ -6,8 +6,8 @@ function random(list) {
     return list[Math.floor(Math.random() * list.length)];
 }
 
-var height = 825,
-    width = 1050;
+var height = 845,
+    width = 1100;
 
 var margins = {
     left: 30,
@@ -73,7 +73,7 @@ var opacity = d3.scaleLinear()
 var redblue = d3.scaleLinear()
     .clamp(true)
     .domain([0.25, 0.5, 0.75])
-    .range(['#2166ac', '#964372', '#e31a1c']);
+    .range(['#1a80c4', '#964372', '#cc3d3d']);
 
 var x = d3.scaleLinear()
     .range([0, width - margins.left - margins.right])
@@ -357,7 +357,7 @@ function program(error, topo, csv) {
 
                 cells
                     .merge(cells.enter().append('td'))
-                    .text(d => d);
+                    .text(d => d || '–');
 
                 infobox
                     .style('visibility', 'visible')
@@ -424,13 +424,13 @@ function program(error, topo, csv) {
 
         newRects.append('text')
             .text(d => d.name)
-            .attr('dx', (_, i) => i === 0 ? 4 : -4)
+            .attr('dx', (_, i) => i === 0 ? barbuf : -barbuf)
             .attr('x', (_, i) => i === 0 ? 0 : x(total));
 
         newRects.append('text')
             .text(d => d.ev)
             .attr('x', (d, i) => i === 0 ? x(d.ev) : x(total - d.ev))
-            .attr('dx', (d, i) => i === 0 ? -2 : 2)
+            .attr('dx', (d, i) => i === 0 ? -barbuf : barbuf)
             .attr('class', 'ev');
 
         newRects.selectAll('text')

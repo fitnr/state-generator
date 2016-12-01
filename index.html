@@ -19,7 +19,7 @@
             stroke: white;
         }
         .states path {
-            fill-opacity: 0.75;
+            fill-opacity: 0.90;
         }
         .states path:hover,
         .label:hover + path {
@@ -36,18 +36,6 @@
             font-family: sans-serif;
             text-anchor: middle;
             cursor: default;
-        }
-        .tables {
-            display: flex;
-            width: 100%;
-        }
-        table {
-            margin-right: 2em;
-            border-collapse: collapse;
-            border-spacing: 0;
-        }
-        td {
-            text-align: right
         }
         td:first-child {
             text-align: left;
@@ -87,34 +75,44 @@
             text-anchor: start;
         }
         .bar-d rect {
-            fill: #2166ac;
+            fill: #1a80c4;
         }
         .bar-r rect {
-            fill: #e31a1c;
+            fill: #cc3d3d;
         }
         .infobox {
             font-size: 12px;
             position: absolute;
             background-color: white;
+            border: solid 1px darkgray;
+            border-radius: 3px;
         }
-        .infobox table {
-            border-spacing: 3px;
-            border-collapse: separate;
+        table {
+            border-spacing: 0;
+            border-collapse: collapse;
         }
         .win td:first-child {
             color: white;
         }
         .d.win td:first-child {
-            background-color: #2166ac;
+            background-color: #1a80c4;
         }
         .r.win td:first-child {
-            background-color: #e31a1c;
+            background-color: #cc3d3d;
         }
         .infobox-name {
-            padding: 0;
+            padding: 6px 12px;
+        }
+        table {
+            margin: 6px;
+        }
+        td, th {
+            padding: 2px 5px;
+        }
+        .infobox-name {
             font-weight: bold;
             font-size: 12px;
-            margin: 0 0 0 3px;
+            margin: 0;
         }
         th {
             text-align: left;
