@@ -66,7 +66,7 @@ var commaize = d3.format(',');
 
 var opacity = d3.scaleLinear()
     .domain([1, 2e5])
-    .range([0.15, 1])
+    .range([0.25, 1])
     .clamp(true);
 
 var redblue = d3.scaleLinear()
