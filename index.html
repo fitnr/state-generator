@@ -92,6 +92,35 @@
         .bar-r rect {
             fill: #e31a1c;
         }
+        .infobox {
+            font-size: 12px;
+            position: absolute;
+            background-color: white;
+        }
+        .infobox table {
+            border-spacing: 3px;
+            border-collapse: separate;
+        }
+        .win td:first-child {
+            color: white;
+        }
+        .d.win td:first-child {
+            background-color: #2166ac;
+        }
+        .r.win td:first-child {
+            background-color: #e31a1c;
+        }
+        .infobox-name {
+            padding: 0;
+            font-weight: bold;
+            font-size: 12px;
+            margin: 0 0 0 3px;
+        }
+        th {
+            text-align: left;
+            color: #666;
+            font-weight: normal
+        }
     </style>
 </head>
 <body>
@@ -133,7 +162,19 @@
         </fieldset>
     </form>
     <svg id="map"></svg>
-    <div class="tables"></div>
+    <div id="infobox" class="infobox">
+        <p class="infobox-name" id="infobox-name"></p>
+        <table>
+            <thead>
+                <tr>
+                    <th>name</th>
+                    <th>votes</th>
+                    <th>pct.</th>
+                    <th>e.v.</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
     <script src="main.js"></script>
 </body>
 </html>

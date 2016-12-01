@@ -62,6 +62,9 @@ var forceNeighbors = [
     ['53073', '53055'],
 ];
 
+var commaize = d3.format(',');
+var percentize = d3.format('.2%');
+
 var opacity = d3.scaleLinear()
     .domain([1, 2e5])
     .range([0.25, 1])
@@ -214,7 +217,8 @@ function program(error, topo, csv) {
     var transition = d3.transition()
         .duration(250);
 
-    var infobox = d3.select(document.append('div'));
+    var infobox = d3.select('#infobox');
+    infobox.select('table').append('tbody');
 
     /**
      * Run the map
@@ -297,6 +301,18 @@ function program(error, topo, csv) {
             );
         };
 
+        var mousemove = function() {
+            var mouse = d3.mouse(this);
+            var node = svg.node();
+            infobox
+                .style('left', function(d) {
+                    return (mouse[0] + node.offsetLeft - (this.clientWidth/2)) + 'px';
+                })
+                .style('top', function(d) {
+                    return (mouse[1] + node.offsetTop + 30) + 'px';
+                });
+        };
+
         // state paths
 
         var states = state.selectAll('path')
@@ -310,9 +326,46 @@ function program(error, topo, csv) {
         states.merge(enterStates)
             .attr('d', path)
             .attr('id', (d, i) => 'state-' + i)
-            .on('mouseover', function(d){
+            .on('mouseover', function(d, i) {
+                var year = getYear();
 
-            });
+                var data = ['d', 'r'].map(party => ({
+                        party: party,
+                        winner: counts[year].ev[party][i] > 0,
+                        // name, votes, pct, EV
+                        data: [
+                            candidates[year][party],
+                            commaize(counts[year].vote[party][i]),
+                            percentize(counts[year].vote[party][i] / counts[year].vote.tot[i]),
+                            counts[year].ev[party][i]
+                        ]
+                    })
+                );
+
+                var rows = infobox.select('tbody')
+                    .selectAll('tr').data(data);
+
+                rows.exit().remove();
+
+                var enter = rows.enter().append('tr')
+                    .attr('class', d => d.party);
+
+                var cells = rows.merge(enter)
+                    .classed('win', d => d.winner)
+                    .selectAll('td')
+                    .data(d => d.data);
+
+                cells
+                    .merge(cells.enter().append('td'))
+                    .text(d => d);
+
+                infobox
+                    .style('visibility', 'visible')
+                    .select('#infobox-name')
+                    .text(d.properties.name);
+            })
+            .on('mouseout', _ => infobox.style('visibility', 'hidden'))
+            .on('mousemove', mousemove);
 
         // state label text
 
