@@ -130,6 +130,10 @@ function seeds(method, features) {
     return seeds;
 }
 
+function getYear() {
+    return document.querySelector('[name=year]:checked').value;
+}
+
 function make(features, neighbors, options) {
     var map = d3.map(features, d => d.properties.id);
     var seedindices = seeds((options || {}).method, features);
@@ -221,25 +225,29 @@ function program(error, topo, csv) {
         var method = document.querySelector('[name=method]:checked').value;
         var maker = make(features, neighbors, {method: method});
 
-        var counts = elections.reduce((obj, y) => (
-            obj[y] = {
-                d: maker.voteCount('d' + y),
-                r: maker.voteCount('r' + y)
-            }, obj
-        ), {});
-
         var evs = {
             1990: maker.ev(reps, '90'),
             2000: maker.ev(reps, '00'),
             2010: maker.ev(reps, '10'),
         };
 
-        // return the number list of EV total by state for given year, party
-        function getEv(year, party) {
-            var oppo = party === 'd' ? 'r' : 'd';
+        var counts = elections.reduce(function(obj, year) {
             var c = census(year);
-            return evs[c].map((ev, i) => (counts[year][party][i] > counts[year][oppo][i]) ? ev : 0);
-        }
+            var vote = {
+                d: maker.voteCount('d' + year),
+                r: maker.voteCount('r' + year),
+                tot: maker.voteCount('tot' + year),
+            };
+            var ev = {
+                d: evs[c].map((ev, i) => (vote.d[i] > vote.r[i]) ? ev : 0),
+                r: evs[c].map((ev, i) => (vote.r[i] > vote.d[i]) ? ev : 0),
+            };
+            obj[year] = {
+                vote: vote,
+                ev: ev
+            };
+            return obj;
+        }, {});
 
         var statefeatures = maker.states().map(function(state, j) {
             var feature = topojson.merge(topo,
@@ -258,6 +266,36 @@ function program(error, topo, csv) {
             };
             return feature;
         });
+
+        var votes = elections.map(year => ({
+            year: year,
+            data: ['d', 'r'].map(party => ({
+                    name: candidates[year][party],
+                    party: party,
+                    vote: d3.sum(counts[year].vote[party]),
+                    ev: d3.sum(counts[year].ev[party]),
+                    state: counts[year].ev[party].filter(y => y > 0).length,
+            }))
+        }));
+
+        var countyFill = function(selection) {
+            var year = this;
+            selection
+                .style('fill', function(d) {
+                    var x = results.get(d.properties.id);
+                    return redblue(+x['r' + year] / (+x['r' + year] + (+x['d' + year])));
+                })
+                .style('fill-opacity', d =>
+                    opacity(results.get(d.properties.id)['tot' + year])
+                );
+        };
+
+        var stateFill = function(selection) {
+            var year = this;
+            selection.style('fill', (d, i) =>
+                counts[year].ev.d[i] > 0 ? redblue.range()[0] : redblue.range()[2]
+            );
+        };
 
         // state paths
 
@@ -308,43 +346,6 @@ function program(error, topo, csv) {
                 maker.countyMaps.fips[a.properties.id] !== maker.countyMaps.fips[b.properties.id]
             ))
             .attr('d', path);
-
-        var countyFill = function(selection) {
-            var year = this;
-            selection
-                .style('fill', function(d) {
-                    var x = results.get(d.properties.id);
-                    return redblue(+x['r' + year] / (+x['r' + year] + (+x['d' + year])));
-                })
-                .style('fill-opacity', d =>
-                    opacity(results.get(d.properties.id)['tot' + year])
-                );
-        };
-
-        var stateFill = function(selection) {
-            var year = this;
-            selection.style('fill', (d, i) =>
-                counts[year].d[i] > counts[year].r[i] ? redblue.range()[0] : redblue.range()[2]
-            );
-        };
-
-        var votes = elections.map(function(year) {
-            var ev = {
-                r: getEv(year, 'r'),
-                d: getEv(year, 'd'),
-            };
-            return {
-                year: year,
-                data: ['d', 'r'].map(x => ({
-                        name: candidates[year][x],
-                        party: x,
-                        vote: d3.sum(counts[year][x]),
-                        ev: d3.sum(ev[x]),
-                        state: ev[x].filter(y => y > 0).length,
-                    })
-                )
-            };
-        });
 
         // bar charts
 
@@ -398,7 +399,7 @@ function program(error, topo, csv) {
 
         function draw() {
             var geography = document.querySelector('[name=view]:checked').value;
-            var year = document.querySelector('[name=year]:checked').value;
+            var year = getYear();
 
             var states = d3.select('.states').selectAll('path');
             var cg = d3.selectAll('.counties');
