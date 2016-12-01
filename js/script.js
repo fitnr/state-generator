@@ -62,8 +62,6 @@ var forceNeighbors = [
     ['53073', '53055'],
 ];
 
-var commaize = d3.format(',');
-
 var opacity = d3.scaleLinear()
     .domain([1, 2e5])
     .range([0.25, 1])
@@ -212,6 +210,8 @@ function program(error, topo, csv) {
     var transition = d3.transition()
         .duration(250);
 
+    var infobox = d3.select(document.append('div'));
+
     /**
      * Run the map
      */
@@ -271,7 +271,10 @@ function program(error, topo, csv) {
 
         states.merge(enterStates)
             .attr('d', path)
-            .attr('id', (d, i) => 'state-' + i);
+            .attr('id', (d, i) => 'state-' + i)
+            .on('mouseover', function(d){
+
+            });
 
         // state label text
 
@@ -369,12 +372,6 @@ function program(error, topo, csv) {
             .text(d => d.name)
             .attr('dx', (_, i) => i === 0 ? 4 : -4)
             .attr('x', (_, i) => i === 0 ? 0 : x(total));
-
-        newRects.append('text')
-            .text(d => commaize(d.vote))
-            .attr('dx', 2)
-            .attr('x', (_, i) => i === 0 ? 0 : x(total))
-            .attr('dx', (_, i) => i === 0 ? 50 : -50);
 
         newRects.append('text')
             .text(d => d.ev)
