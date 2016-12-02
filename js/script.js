@@ -415,17 +415,24 @@ function program(error, topo, csv) {
 
         // bar charts
 
-        var bar = bars.selectAll('g')
-            .data(votes, d => d.year);
+        var bar = bars.selectAll('.sg-bar-parent')
+            .data(votes);
 
         var barEnter = bar.enter()
             .append('g')
+            .classed('sg-bar-parent', true)
             .attr('transform', (_, i) => 'translate(0,' + (i * (barheight + barbuf)) + ')' );
+
+        // year labels
+        barEnter.append('text')
+            .text(d => '20' + d.year)
+            .attr('dx', -margins.left)
+            .attr('dy', '1em');
 
         var rects = bar
             .merge(barEnter)
-            .selectAll('.bar')
-            .data(d => d.data, d => d.name);
+            .selectAll('.sg-bar')
+            .data(d => d.data);
 
         var newRects = rects.enter()
             .append('g')
@@ -435,33 +442,32 @@ function program(error, topo, csv) {
         newRects.append('rect')
             .attr('height', barheight);
 
+        // candidate labels
         newRects.append('text')
             .text(d => d.name)
+            .attr('dy', '1em')
             .attr('dx', (_, i) => i === 0 ? barbuf : -barbuf)
             .attr('x', (_, i) => i === 0 ? 0 : x(total));
 
         newRects.append('text')
             .text(d => d.ev)
-            .attr('x', (d, i) => i === 0 ? x(d.ev) : x(total - d.ev))
             .attr('dx', (d, i) => i === 0 ? -barbuf : barbuf)
+            .attr('dy', '1em')
             .attr('class', 'sg-ev');
-
-        newRects.selectAll('text')
-            .attr('dy', '1em');
 
         rects = rects
             .merge(newRects)
-            .classed('win', d => d.ev >= win)
-            .select('rect')
+            .classed('sg-win', d => d.ev >= win);
+
+        rects.select('rect')
             .transition(transition)
             .attr('width', d => x(d.ev))
             .filter((d, i) => i === 1)
             .attr('transform', d => 'translate(' + x(total - d.ev) + ')');
 
-        barEnter.append('text')
-            .text(d => '20' + d.year)
-            .attr('dx', -margins.left)
-            .attr('dy', '1em');
+        rects.select('.sg-ev')
+            .transition(transition)
+            .attr('x', (d, i) => i === 0 ? x(d.ev) : x(total - d.ev));
 
         function draw() {
             var geography = document.querySelector('[name=view]:checked').value;
