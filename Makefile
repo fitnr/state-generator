@@ -15,10 +15,10 @@ main.js: js/script.js $(SRC) rollup.js .babelrc
 
 data/counties.json: geo/counties-albers.geojson | data
 	$(NM)/geo2topo -q 1e5 counties=$< | \
-	$(NM)/toposimplify -fp 6 -o $@
+	$(NM)/toposimplify -f -p 0.5 -o $@
 
 geo/counties-albers.geojson: geo/counties.geojson
-	$(NM)/geoproject 'd3.geoAlbersUsa().scale(1400).translate([525, 325])' $< -o $@
+	$(NM)/geoproject 'd3.geoAlbersUsa().scale(1500).translate([545, 345])' $< -o $@
 
 geo/counties.geojson: geo/counties.shp $(foreach x,90 00 10,dbf/DEC_$x.dbf)
 	ogr2ogr $@ $< -f GeoJSON -dialect sqlite \
