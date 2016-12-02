@@ -99,6 +99,7 @@ var stateCount = 48,
     reps = 436;
 
 var hawaii = ['15001', '15003', '15005', '15007', '15009'];
+var excludes = ['02000', '11001'].concat(hawaii);
 
 function census(year) {
     return 2000 + (Math.floor((+year - 1) / 10) * 10);
@@ -117,10 +118,8 @@ function seeds(method, features) {
             .map(geoid => ids.indexOf(geoid));
     }
     else if (method === 'state') {
-        var exclude = ['02000', '11001'].concat(hawaii);
-
         var byOriginalState = ids.reduce(function(obj, geoid, i) {
-                if (exclude.indexOf(geoid) > -1)
+                if (excludes.indexOf(geoid) > -1)
                     return obj;
                 var key = geoid.substr(0, 2);
                 obj[key] = obj[key] || [];
@@ -261,13 +260,15 @@ function program(error, topo, csv) {
             var feature = topojson.merge(topo,
                 topo.objects.counties.geometries.filter((_, i) => state.has(i))
             );
+            var names = Array.from(state).map(county => features[county].properties.n);
             feature.properties = {
                 ev: {
                     1990: evs[1990][j],
                     2000: evs[2000][j],
                     2010: evs[2010][j],
                 },
-                name: random(Array.from(state).map(county => features[county].properties.n)),
+                // force Hawaii to be called Hawaii
+                name: names.indexOf('Hawaii') === -1 ? random(names) : 'Hawaii',
                 // not really a hash, but a string representation of the counties,
                 // for uniqueness purposes
                 hash: Array.from(state).join('|'),
