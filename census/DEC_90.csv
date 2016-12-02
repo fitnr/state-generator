@@ -66,7 +66,7 @@ GEOID,P01,NAME
 01129,16694,Washington County
 01131,13568,Wilcox County
 01133,22053,Winston County
-02,550043,Alaska
+02000,550043,Alaska
 04001,61591,Apache County
 04003,97624,Cochise County
 04005,96591,Coconino County
@@ -516,7 +516,11 @@ GEOID,P01,NAME
 13317,10597,Wilkes County
 13319,10228,Wilkinson County
 13321,19744,Worth County
-15,1108229,Hawaii
+15001,120317,Hawaii County
+15003,836231,Honolulu County
+15005,130,Kalawao County
+15007,51177,Kauai County
+15009,100374,Maui County
 16001,205775,Ada County
 16003,3254,Adams County
 16005,66026,Bannock County

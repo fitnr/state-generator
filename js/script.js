@@ -98,6 +98,8 @@ function prob(count, pop) {
 var stateCount = 48,
     reps = 436;
 
+var hawaii = ['15001', '15003', '15005', '15007', '15009'];
+
 function census(year) {
     return 2000 + (Math.floor((+year - 1) / 10) * 10);
 }
@@ -115,8 +117,10 @@ function seeds(method, features) {
             .map(geoid => ids.indexOf(geoid));
     }
     else if (method === 'state') {
+        var exclude = ['02000', '11001'].concat(hawaii);
+
         var byOriginalState = ids.reduce(function(obj, geoid, i) {
-                if (['02', '15', '11001'].indexOf(geoid) > -1)
+                if (exclude.indexOf(geoid) > -1)
                     return obj;
                 var key = geoid.substr(0, 2);
                 obj[key] = obj[key] || [];
@@ -143,8 +147,8 @@ function make(features, neighbors, options) {
 
     var opts = {prob: prob, popField: '10'};
     var maker = new stateMaker(features, neighbors, opts);
-    maker.addState([features.indexOf(map.get('02'))]);
-    maker.addState([features.indexOf(map.get('15'))]);
+    maker.addState([features.indexOf(map.get('02000'))]);
+    maker.addState(hawaii.map(geoid => features.indexOf(map.get(geoid))));
 
     var dc = maker.addState([features.indexOf(map.get('11001'))]);
 
@@ -302,7 +306,7 @@ function program(error, topo, csv) {
         };
 
         var mousemove = function() {
-            var mouse = d3.mouse(svg.node());
+            var mouse = d3.mouse(document.body);
             infobox
                 .style('left', function(d) {
                     return (mouse[0] - (this.clientWidth/2)) + 'px';

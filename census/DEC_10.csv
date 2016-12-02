@@ -66,7 +66,7 @@ GEOID,NAME,P01
 01129,"Washington County, Alabama",17581
 01131,"Wilcox County, Alabama",11670
 01133,"Winston County, Alabama",24484
-02,"Alaska",710235
+02000,"Alaska",710235
 04001,"Apache County, Arizona",71518
 04003,"Cochise County, Arizona",131346
 04005,"Coconino County, Arizona",134421
@@ -517,7 +517,11 @@ GEOID,NAME,P01
 13317,"Wilkes County, Georgia",10593
 13319,"Wilkinson County, Georgia",9563
 13321,"Worth County, Georgia",21679
-15,"Hawaii",1360301
+15001,"Hawaii County, Hawaii",185079
+15003,"Honolulu County, Hawaii",953207
+15005,"Kalawao County, Hawaii",90
+15007,"Kauai County, Hawaii",67091
+15009,Maui County, Hawaii 154,834
 16001,"Ada County, Idaho",392365
 16003,"Adams County, Idaho",3976
 16005,"Bannock County, Idaho",82839
