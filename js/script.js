@@ -193,7 +193,8 @@ function program(error, topo, csv) {
         .data(features).enter()
         .append("path")
         .attr('class', 'county')
-        .attr('d', path);
+        .attr('d', path)
+        .attr('id', d => 'county-' + d.properties.id);
 
     // set up SVG and DOM
     var state = svg.append('g').attr('class', 'states');
@@ -302,15 +303,52 @@ function program(error, topo, csv) {
         };
 
         var mousemove = function() {
-            var mouse = d3.mouse(this);
-            var node = svg.node();
+            var mouse = d3.mouse(svg.node());
             infobox
                 .style('left', function(d) {
-                    return (mouse[0] + node.offsetLeft - (this.clientWidth/2)) + 'px';
+                    return (mouse[0] - (this.clientWidth/2)) + 'px';
                 })
                 .style('top', function(d) {
-                    return (mouse[1] + node.offsetTop + 30) + 'px';
+                    return (mouse[1] + 30) + 'px';
                 });
+        };
+
+        var mouseover = function(d, i) {
+            var year = getYear();
+            var data = ['d', 'r'].map(party => ({
+                    party: party,
+                    winner: counts[year].ev[party][i] > 0,
+                    // name, votes, pct, EV
+                    data: [
+                        candidates[year][party],
+                        commaize(counts[year].vote[party][i]),
+                        percentize(counts[year].vote[party][i] / counts[year].vote.tot[i]),
+                        counts[year].ev[party][i]
+                    ]
+                })
+            );
+
+            var rows = infobox.select('tbody')
+                .selectAll('tr').data(data);
+
+            rows.exit().remove();
+
+            var enter = rows.enter().append('tr')
+                .attr('class', d => d.party);
+
+            var cells = rows.merge(enter)
+                .classed('win', d => d.winner)
+                .selectAll('td')
+                .data(d => d.data);
+
+            cells
+                .merge(cells.enter().append('td'))
+                .text(d => d || '–');
+
+            infobox
+                .style('visibility', 'visible')
+                .select('#infobox-name')
+                .text(d.properties.name);
         };
 
         // state paths
@@ -323,49 +361,9 @@ function program(error, topo, csv) {
         var enterStates = states.enter()
             .append('path');
 
-        states.merge(enterStates)
+        states = states.merge(enterStates)
             .attr('d', path)
-            .attr('id', (d, i) => 'state-' + i)
-            .on('mouseover', function(d, i) {
-                var year = getYear();
-
-                var data = ['d', 'r'].map(party => ({
-                        party: party,
-                        winner: counts[year].ev[party][i] > 0,
-                        // name, votes, pct, EV
-                        data: [
-                            candidates[year][party],
-                            commaize(counts[year].vote[party][i]),
-                            percentize(counts[year].vote[party][i] / counts[year].vote.tot[i]),
-                            counts[year].ev[party][i]
-                        ]
-                    })
-                );
-
-                var rows = infobox.select('tbody')
-                    .selectAll('tr').data(data);
-
-                rows.exit().remove();
-
-                var enter = rows.enter().append('tr')
-                    .attr('class', d => d.party);
-
-                var cells = rows.merge(enter)
-                    .classed('win', d => d.winner)
-                    .selectAll('td')
-                    .data(d => d.data);
-
-                cells
-                    .merge(cells.enter().append('td'))
-                    .text(d => d || '–');
-
-                infobox
-                    .style('visibility', 'visible')
-                    .select('#infobox-name')
-                    .text(d.properties.name);
-            })
-            .on('mouseout', _ => infobox.style('visibility', 'hidden'))
-            .on('mousemove', mousemove);
+            .attr('id', (d, i) => 'state-' + i);
 
         // state label text
 
@@ -391,6 +389,18 @@ function program(error, topo, csv) {
             .attr('transform', d => 'translate(' + path.centroid(d) + ')');
 
         text.selectAll('tspan:first-child').text(d => d.properties.name);
+
+        // mouse actions
+
+        states
+            .on('mouseover', mouseover)
+            .on('mouseout', _ => infobox.style('visibility', 'hidden'))
+            .on('mousemove', mousemove);
+
+        text
+            .on('mouseover', mouseover)
+            .on('mouseout', _ => infobox.style('visibility', 'hidden'))
+            .on('mousemove', mousemove);
 
         // state boundary
 
