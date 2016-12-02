@@ -205,7 +205,9 @@ function program(error, topo, csv) {
         .append('path')
         .attr('class', 'sg-boundary');
 
-    var labels = svg.append('g').attr('class', 'sg-labels');
+    var labels = svg.append('g').classed('sg-labels', true);
+    labels.append('g').classed('stroke', true);
+    labels.append('g').classed('fill', true);
 
     // create bar charts
     var bars = svg.append('g').classed('sg-bars', true)
@@ -370,37 +372,47 @@ function program(error, topo, csv) {
 
         // state label text
 
-        var text = labels.selectAll('text')
-            .data(statefeatures, (d, i) => d.properties.hash);
+        function addLabels(selection) {
+            var text = selection.selectAll('text')
+                .data(statefeatures, (d, i) => d.properties.hash);
 
-        text.exit().remove();
+            text.exit().remove();
 
-        var enterText = text.enter()
-            .append('text')
-            .attr('x', 0)
-            .attr('y', 0);
+            var enterText = text.enter()
+                .append('text')
+                .attr('x', 0)
+                .attr('y', 0);
 
-        enterText.append('tspan')
-            .attr('x', 0)
-            .attr('y', 0);
+            enterText.append('tspan')
+                .attr('x', 0)
+                .attr('y', 0);
 
-        enterText.append('tspan')
-            .attr('x', 0)
-            .attr('y', '1.15em');
+            enterText.append('tspan')
+                .attr('x', 0)
+                .attr('y', '1.15em');
 
-        text = text.merge(enterText)
-            .attr('transform', d => 'translate(' + path.centroid(d) + ')');
+            text = text.merge(enterText)
+                .attr('transform', d => 'translate(' + path.centroid(d) + ')');
 
-        text.selectAll('tspan:first-child').text(d => d.properties.name);
+            text.selectAll('tspan:first-child').text(d => d.properties.name);
+
+            // mouse actions
+
+            enterText
+                .on('mouseover', mouseover)
+                .on('mouseout', _ => infobox.style('visibility', 'hidden'))
+                .on('mousemove', mousemove);
+        }
+
+        labels.select('.fill')
+            .call(addLabels);
+
+        labels.select('.stroke')
+            .call(addLabels);
 
         // mouse actions
 
         states
-            .on('mouseover', mouseover)
-            .on('mouseout', _ => infobox.style('visibility', 'hidden'))
-            .on('mousemove', mousemove);
-
-        text
             .on('mouseover', mouseover)
             .on('mouseout', _ => infobox.style('visibility', 'hidden'))
             .on('mousemove', mousemove);
@@ -476,14 +488,14 @@ function program(error, topo, csv) {
             var states = d3.select('.sg-states').selectAll('path');
             var cg = d3.selectAll('.sg-counties');
 
-            text.selectAll('tspan:last-child').text(d => d.properties.ev[census(year)]);
+            labels.selectAll('tspan:last-child').text(d => d.properties.ev[census(year)]);
 
             if (geography === 'county') {
                 d3.selectAll('.sg-county')
                     .call(countyFill.bind(year));
                 cg.style('display', 'inherit');
                 states.style('fill-opacity', 0);
-                text.style('display', 'none');
+                labels.style('visibility', 'hidden');
 
             } else {
                 states
@@ -491,7 +503,7 @@ function program(error, topo, csv) {
                     .style('fill-opacity', null);
 
                 cg.style('display', 'none');
-                text.style('display', null);
+                labels.style('visibility', null);
             }
         }
 

@@ -13,6 +13,8 @@
         }
         .sg-svg text {
             font-size: 10px;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
         .sg-counties path {
             stroke-width: 0.125;
@@ -31,10 +33,17 @@
             stroke-linejoin: round;
         }
         .sg-labels text {
-            fill: #444;
+            fill: white;
             font-family: sans-serif;
             text-anchor: middle;
             cursor: default;
+            stroke-width: 0;
+        }
+        .sg-labels .stroke text {
+            stroke-width: 3.5;
+            fill: none;
+            opacity: 0.75;
+            stroke: #333;
         }
         td:first-child {
             text-align: left;
