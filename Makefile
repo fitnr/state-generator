@@ -3,7 +3,7 @@ DIR = /Volumes/oeil/gis/data/usa/census/2014
 NM = node_modules/.bin
 
 .PHONY: all
-all: main.js data/results.csv data/counties.json
+all: main.js files/state-generator-results.csv files/state-generator-counties.json
 
 SRC = $(filter-out js/script.js,$(wildcard js/*.js))
 
@@ -13,7 +13,7 @@ main.min.js: main.js
 main.js: js/script.js $(SRC) rollup.js .babelrc
 	rollup -c rollup.js -f iife -n sg -g d3:d3 $< -o $@
 
-data/counties.json: geo/counties-albers.geojson | data
+files/state-generator-counties.json: geo/counties-albers.geojson | files
 	$(NM)/geo2topo -q 1e5 counties=$< | \
 	$(NM)/toposimplify -f -p 0.5 -o $@
 
@@ -29,7 +29,7 @@ geo/counties.geojson: geo/counties.shp $(foreach x,90 00 10,dbf/DEC_$x.dbf)
 			LEFT JOIN 'dbf'.DEC_00 AS dec00 USING (GEOID) \
 			LEFT JOIN 'dbf'.DEC_10 AS dec10 USING (GEOID)" 
 
-data/results.csv: $(foreach x,00 04 08 12 16,dbf/20$(x).dbf) | data
+files/state-generator-results.csv: $(foreach x,00 04 08 12 16,dbf/20$(x).dbf) | files
 	ogr2ogr -f CSV $@ $(<D) -dialect sqlite \
 		-sql 'SELECT a.GEOID GEOID, a.rep r16, a.dem d16, a.tot tot16, \
 		b.r12, b.d12, b.tot12, c.r08, c.d08, c.tot08, \
@@ -155,4 +155,4 @@ census/DEC_90.csv: census/99C8_00.txt
 	sed 's/^46113/46102/' \
 	>> $@
 
-data geo dbf:; mkdir -p $@
+files geo dbf:; mkdir -p $@

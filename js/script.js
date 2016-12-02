@@ -499,6 +499,6 @@ function program(error, topo, csv) {
 }
 
 d3.queue()
-    .defer(d3.json, 'data/counties.json')
-    .defer(d3.csv, 'data/results.csv')
+    .defer(d3.json, 'files/state-generator-counties.json')
+    .defer(d3.csv, 'files/state-generator-results.csv')
     .await(program);
