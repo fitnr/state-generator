@@ -11,27 +11,26 @@
         body {
             font-family: sans-serif;
         }
-        text {
+        .sg-svg text {
             font-size: 10px;
         }
-        .counties path {
+        .sg-counties path {
             stroke-width: 0.125;
             stroke: white;
         }
-        .states path {
+        .sg-states path {
             fill-opacity: 0.90;
         }
-        .states path:hover,
-        .label:hover + path {
+        .sg-states path:hover {
             fill-opacity: 1;
         }
-        .boundary {
+        .sg-boundary {
             stroke: #fff;
             stroke-width: 1px;
             fill: none;
             stroke-linejoin: round;
         }
-        .labels text {
+        .sg-labels text {
             fill: #444;
             font-family: sans-serif;
             text-anchor: middle;
@@ -44,43 +43,33 @@
             border: 0;
             padding: 0.5em 0;
         }
-        .winner {
-            background-color: LightSteelBlue;
-        }
-        #info {
-            height: 100px;
-            width: 200px;
-            display: none;
-            background-color: white;
-            position: absolute;
-        }
-        .bars line {
+        .sg-bars line {
             stroke: black;
             stroke-width: 1.5px;
         }
-        .bars text {
+        .sg-bars text {
             font-size: 12px;
         }
-        .win text {
+        .sg-win text {
             font-weight: bold;
         }
-        .bar text {
+        .sg-bar text {
             fill: white;
         }
-        .bar-d .ev,
-        .bar-r text {
+        .sg-bar-d .sg-ev,
+        .sg-bar-r text {
             text-anchor: end;
         }
-        .bar-r .ev {
+        .sg-bar-r .sg-ev {
             text-anchor: start;
         }
-        .bar-d rect {
+        .sg-bar-d rect {
             fill: #1a80c4;
         }
-        .bar-r rect {
+        .sg-bar-r rect {
             fill: #cc3d3d;
         }
-        .infobox {
+        .sg-infobox {
             font-size: 12px;
             position: absolute;
             background-color: white;
@@ -88,34 +77,33 @@
             border-radius: 3px;
             visibility: hidden;
         }
-        table {
+        .sg-win td:first-child {
+            color: white;
+        }
+        .d.sg-win td:first-child {
+            background-color: #1a80c4;
+        }
+        .r.sg-win td:first-child {
+            background-color: #cc3d3d;
+        }
+        .sg-infobox-name {
+            padding: 6px 10px;
+        }
+        .sg-infobox table {
+            margin: 6px;
             border-spacing: 0;
             border-collapse: collapse;
         }
-        .win td:first-child {
-            color: white;
-        }
-        .d.win td:first-child {
-            background-color: #1a80c4;
-        }
-        .r.win td:first-child {
-            background-color: #cc3d3d;
-        }
-        .infobox-name {
-            padding: 6px 10px;
-        }
-        table {
-            margin: 6px;
-        }
-        td, th {
+        .sg-infobox td,
+        .sg-infobox th {
             padding: 2px 5px;
         }
-        .infobox-name {
+        .sg-infobox-name {
             font-weight: bold;
             font-size: 12px;
             margin: 0;
         }
-        th {
+        .sg-infobox th {
             text-align: left;
             color: #666;
             font-weight: normal
@@ -123,46 +111,46 @@
     </style>
 </head>
 <body>
-    <form action="">
+    <form class="form-inline">
         <strong>Show</strong>
         <fieldset>
             <label for="view-state">
-                <input type="radio" class="form-control-view" id="view-state" name="view" value="state" checked> states
+                <input type="radio" class="sg-form-control-view" id="view-state" name="view" value="state" checked> states
             </label>
             <label for="view-county">
-                <input type="radio" class="form-control-view" id="view-county" name="view" value="county"> counties
+                <input type="radio" class="sg-form-control-view" id="view-county" name="view" value="county"> counties
             </label>
         </fieldset>
         <fieldset>
-            <label for="year-16"><input class="form-control-year" name="year" id="year-16" value="16" type="radio" checked>2016</label>
-            <label for="year-12"><input class="form-control-year" name="year" id="year-12" value="12" type="radio">2012</label>
-            <label for="year-08"><input class="form-control-year" name="year" id="year-08" value="08" type="radio">2008</label>
-            <label for="year-04"><input class="form-control-year" name="year" id="year-04" value="04" type="radio">2004</label>
-            <label for="year-00"><input class="form-control-year" name="year" id="year-00" value="00" type="radio">2000</label>
+            <label for="year-16"><input class="form-control-year" name="year" id="year-16" value="16" type="radio" checked> 2016</label>
+            <label for="year-12"><input class="form-control-year" name="year" id="year-12" value="12" type="radio"> 2012</label>
+            <label for="year-08"><input class="form-control-year" name="year" id="year-08" value="08" type="radio"> 2008</label>
+            <label for="year-04"><input class="form-control-year" name="year" id="year-04" value="04" type="radio"> 2004</label>
+            <label for="year-00"><input class="form-control-year" name="year" id="year-00" value="00" type="radio"> 2000</label>
         </fieldset>
     </form>
 
-    <form action="">
+    <form class="form-inline">
         <strong>Redraw map</strong>
         <fieldset>
             Seed counties:
             <label for="method-random">
-                <input type="radio" class="form-control-method" id="method-random" name="method" value="random" checked> random
+                <input type="radio" class="sg-form-control-method" id="method-random" name="method" value="random" checked> random
             </label>
             <label for="method-state">
-                <input type="radio" class="form-control-method" id="method-state" name="method" value="state"> one per state
+                <input type="radio" class="sg-form-control-method" id="method-state" name="method" value="state"> one per state
             </label>
             <label for="method-large">
-                <input type="radio" class="form-control-method" id="method-large" name="method" value="large"> large counties
+                <input type="radio" class="sg-form-control-method" id="method-large" name="method" value="large"> large counties
             </label>
         </fieldset>
         <fieldset>
             <button id="button-run">Randomize</button>
         </fieldset>
     </form>
-    <svg id="map"></svg>
-    <div id="infobox" class="infobox">
-        <p class="infobox-name" id="infobox-name"></p>
+    <svg id="map" class="sg-svg"></svg>
+    <div id="infobox" class="sg-infobox">
+        <p class="sg-infobox-name" id="infobox-name"></p>
         <table>
             <thead>
                 <tr>

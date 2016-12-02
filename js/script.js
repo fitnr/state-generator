@@ -188,25 +188,24 @@ function program(error, topo, csv) {
         win = Math.ceil(total/2);
 
     svg.append('g')
-        .attr('class', 'counties')
+        .attr('class', 'sg-counties')
         .selectAll('path')
         .data(features).enter()
         .append("path")
-        .attr('class', 'county')
-        .attr('d', path)
-        .attr('id', d => 'county-' + d.properties.id);
+        .attr('class', 'sg-county')
+        .attr('d', path);
 
     // set up SVG and DOM
-    var state = svg.append('g').attr('class', 'states');
+    var state = svg.append('g').attr('class', 'sg-states');
 
     var boundary = svg.append('g')
         .append('path')
-        .attr('class', 'boundary');
+        .attr('class', 'sg-boundary');
 
-    var labels = svg.append('g').attr('class', 'labels');
+    var labels = svg.append('g').attr('class', 'sg-labels');
 
     // create bar charts
-    var bars = svg.append('g').classed('bars', true)
+    var bars = svg.append('g').classed('sg-bars', true)
         .attr('transform', 'translate(' + [margins.left, height - (elections.length * (barheight + barbuf))] + ')');
 
     bars.append('line')
@@ -337,7 +336,7 @@ function program(error, topo, csv) {
                 .attr('class', d => d.party);
 
             var cells = rows.merge(enter)
-                .classed('win', d => d.winner)
+                .classed('sg-win', d => d.winner)
                 .selectAll('td')
                 .data(d => d.data);
 
@@ -362,8 +361,7 @@ function program(error, topo, csv) {
             .append('path');
 
         states = states.merge(enterStates)
-            .attr('d', path)
-            .attr('id', (d, i) => 'state-' + i);
+            .attr('d', path);
 
         // state label text
 
@@ -426,7 +424,7 @@ function program(error, topo, csv) {
 
         var newRects = rects.enter()
             .append('g')
-            .attr('class', d => 'bar bar-' + d.party)
+            .attr('class', d => 'sg-bar sg-bar-' + d.party)
             .attr('name', d => d.name);
         
         newRects.append('rect')
@@ -441,7 +439,7 @@ function program(error, topo, csv) {
             .text(d => d.ev)
             .attr('x', (d, i) => i === 0 ? x(d.ev) : x(total - d.ev))
             .attr('dx', (d, i) => i === 0 ? -barbuf : barbuf)
-            .attr('class', 'ev');
+            .attr('class', 'sg-ev');
 
         newRects.selectAll('text')
             .attr('dy', '1em');
@@ -464,13 +462,13 @@ function program(error, topo, csv) {
             var geography = document.querySelector('[name=view]:checked').value;
             var year = getYear();
 
-            var states = d3.select('.states').selectAll('path');
-            var cg = d3.selectAll('.counties');
+            var states = d3.select('.sg-states').selectAll('path');
+            var cg = d3.selectAll('.sg-counties');
 
             text.selectAll('tspan:last-child').text(d => d.properties.ev[census(year)]);
 
             if (geography === 'county') {
-                d3.selectAll('.county')
+                d3.selectAll('.sg-county')
                     .call(countyFill.bind(year));
                 cg.style('display', 'inherit');
                 states.style('fill-opacity', 0);
