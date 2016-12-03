@@ -101,6 +101,7 @@ var stateCount = 48,
 
 var hawaii = ['15001', '15003', '15005', '15007', '15009'];
 var excludes = ['02000', '11001'].concat(hawaii);
+var largeCounties = '06037|17031|48201|04013|06073|12086|36047|48113|53033|32003|48439|06085|12011|26163|48029|06001|42101|25017|36103|06067|36005|12099|12057|39035|42003|12095|39049|27053|51059|06013|49035|24031|29189|04019|37119|13121|55079|37183|06019|47157|09001|12103|36029|18097|09003|12031|09009|41051';
 
 function census(year) {
     return 2000 + (Math.floor((+year - 1) / 10) * 10);
@@ -108,14 +109,10 @@ function census(year) {
 
 function seeds(method, features) {
     var seeds;
-    var ids;
-
-    if (method === 'large' || method === 'state')
-        ids = features.map(d => d.properties.id);
+    var ids = features.map(d => d.properties.id);
 
     if (method === 'large') {
-        seeds = '06037|17031|48201|04013|06073|12086|36047|48113|53033|32003|48439|06085|12011|26163|48029|06001|42101|25017|36103|06067|36005|12099|12057|39035|42003|12095|39049|27053|51059|06013|49035|24031|29189|04019|37119|13121|55079|37183|06019|47157|09001|12103|36029|18097|09003|12031|09009|41051'
-            .split('|')
+        seeds = largeCounties.split('|')
             .map(geoid => ids.indexOf(geoid));
     }
     else if (method === 'state') {
@@ -131,7 +128,11 @@ function seeds(method, features) {
         seeds = Object.keys(byOriginalState).map(d => random(byOriginalState[d]));
     }
     else {
-        seeds = d3.shuffle(d3.range(2, features.length)).slice(0, stateCount);
+        var excludeIds = new Set(excludes.map(geoid => ids.indexOf(geoid)));
+        seeds = d3.shuffle(
+            d3.range(2, features.length)
+                .filter(i => !excludeIds.has(i))
+            ).slice(0, stateCount);
     }
 
     return seeds;
@@ -145,8 +146,8 @@ function make(features, neighbors, options) {
     var map = d3.map(features, d => d.properties.id);
     var seedindices = seeds((options || {}).method, features);
 
-    var opts = {prob: prob, popField: '10'};
-    var maker = new stateMaker(features, neighbors, opts);
+    var maker = new stateMaker(features, neighbors, {prob: prob, popField: '10'});
+
     maker.addState([features.indexOf(map.get('02000'))]);
     maker.addState(hawaii.map(geoid => features.indexOf(map.get(geoid))));
 
@@ -156,7 +157,7 @@ function make(features, neighbors, options) {
     maker.freezeState(dc)
         .divideCountry(seedindices);
 
-    return maker;        
+    return maker;
 }
 
 function program(error, topo, csv) {
@@ -216,7 +217,7 @@ function program(error, topo, csv) {
 
     bars.append('line')
         .attr('y1', -barbuf)
-        .attr('y2', height - (elections.length * (barheight + barbuf)))
+        .attr('y2', elections.length * (barheight + barbuf))
         .attr('x1', x(win))
         .attr('x2', x(win));
 
@@ -316,7 +317,7 @@ function program(error, topo, csv) {
 
         var statefeatures = maker.states().map(function(state, j) {
             var feature = topojson.merge(topo,
-                topo.objects.counties.geometries.filter((_, i) => state.has(i))
+                Array.from(state).map(i => topo.objects.counties.geometries[i])
             );
             var names = Array.from(state).map(county => features[county].properties.n);
             feature.properties = {
