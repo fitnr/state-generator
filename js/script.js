@@ -554,6 +554,9 @@ function program(error, topo, csv) {
                 states.style('fill-opacity', 0);
                 labels.style('visibility', 'hidden');
                 legend.style('visibility', null);
+                boundary
+                    .style('stroke', '#333')
+                    .style('stroke-width', '.5px');
 
             } else {
                 states
@@ -563,6 +566,9 @@ function program(error, topo, csv) {
                 cg.style('display', 'none');
                 labels.style('visibility', null);
                 legend.style('visibility', 'hidden');
+                boundary
+                    .style('stroke', null)
+                    .style('stroke-width', null);
             }
         }
 
