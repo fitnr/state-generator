@@ -19,6 +19,10 @@ var margins = {
 var barheight = 18,
     barbuf = 8;
 
+var legPct = [0.3, 0.4, 0.5, 0.6, 0.7];
+var legPop = [1000, 51000, 101000, 151000, 201000];
+var legUnit = 18;
+
 var svg = d3.select("#map")
     .attr('height', height)
     .attr('width', width + margins.left + margins.right);
@@ -235,26 +239,20 @@ function program(error, topo, csv) {
     var infobox = d3.select('#infobox');
     infobox.select('table').append('tbody');
 
-    var legPct = [0.3, 0.4, 0.5, 0.6, 0.7];
-    var legPop = [1000, 51000, 101000, 151000, 201000];
-    var legUnit = 18;
-
     var legend = svg.append('g')
         .classed('legend', true)
-        .attr('transform', 'translate(' + (width - margins.right - (legUnit * legPct.length)) + ',525)');
+        .attr('transform', 'translate(' + (width - margins.right - (legUnit * legPct.length)) + ',480)');
 
-    legend.append('rect')
-        .attr('height', legPop.length * legUnit)
-        .attr('width', legPct.length * legUnit)
-        .style('fill', '#fff');
+    var countyLegend = legend.append('g')
+        .classed('legend-county', true)
+        .attr('transform', 'translate(0,' + (legUnit * 3.5) + ')');
 
-    var legRows = legend.selectAll('g')
+    var legRows = countyLegend.selectAll('g')
         .data(legPct)
         .enter().append('g')
         .attr('transform', (_, i) => 'translate(' + (i * legUnit) + ')');
 
-    legRows
-        .selectAll('rect')
+    legRows.selectAll('rect')
         .data(pct => legPop.map(pop => ({pop: pop, pct: pct})))
         .enter().append('rect')
             .attr('y', (_, i) => i * legUnit)
@@ -279,16 +277,55 @@ function program(error, topo, csv) {
         .attr('dx', '-2')
         .attr('dy', '1.25em');
 
-    legend.append('text')
+    countyLegend.append('text')
         .text('Two-party vote')
         .attr('dy', legUnit * -1.5)
         .attr('dx', legPct.length * legUnit / 2)
         .style('text-anchor', 'middle');
 
-    legend.append('text')
+    countyLegend.append('text')
         .text('Total vote')
         .style('text-anchor', 'middle')
         .attr('transform', 'translate(' + (legUnit * -1.75) + ',' + (legUnit * 2.5) + ') rotate(-90)');
+
+    // tipping point legend
+    var generalLegend = legend.append('g')
+        .classed('legend-general', true);
+
+    generalLegend.append('rect')
+        .classed('sg-tipping', true)
+        .attr('width', legUnit)
+        .attr('height', legUnit);
+
+    generalLegend.append('text')
+        .attr('x', legUnit)
+        .attr('dx', 4)
+        .attr('dy', '1.25em')
+        .text('Tipping point state');
+
+    var stateFillData = [
+        {color: redblue.range().slice(-1), text: 'Democratic win'},
+        {color: darkblue, text: '(over 60%)'},
+        {color: redblue.range()[0], text: 'Republican win'},
+        {color: darkred, text: '(over 60%)'},
+    ];
+
+    var stateLegend = legend.append('g')
+        .classed('legend-state', true)
+        .selectAll('g').data(stateFillData)
+        .enter().append('g')
+        .attr('transform', (_, i) => 'translate(0,' + (1.5 * legUnit + i * legUnit) + ')');
+
+    stateLegend.append('rect')
+        .style('fill', d => d.color)
+        .attr('width', legUnit)
+        .attr('height', legUnit);
+
+    stateLegend.append('text')
+        .attr('x', legUnit)
+        .attr('dx', 4)
+        .attr('dy', '1.25em')
+        .text(d => d.text);
 
     /**
      * Run the map
@@ -593,25 +630,28 @@ function program(error, topo, csv) {
             if (geography === 'county') {
                 d3.selectAll('.sg-county')
                     .call(countyFill.bind(year));
-                cg.style('display', 'inherit');
                 states.style('fill-opacity', 0);
-                labels.style('visibility', 'hidden');
-                legend.style('visibility', null);
                 boundary
                     .style('stroke', '#333')
                     .style('stroke-width', '.5px');
+
+                countyLegend.style('visibility', null);
+                cg.style('visibility', null);
+                labels.style('visibility', 'hidden');
+                stateLegend.style('visibility', 'hidden');
 
             } else {
                 states
                     .call(stateFill.bind(year))
                     .style('fill-opacity', null);
-
-                cg.style('display', 'none');
-                labels.style('visibility', null);
-                legend.style('visibility', 'hidden');
                 boundary
                     .style('stroke', null)
                     .style('stroke-width', null);
+
+                countyLegend.style('visibility', 'hidden');
+                cg.style('visibility', 'hidden');
+                labels.style('visibility', null);
+                stateLegend.style('visibility', null);
             }
         }
 
