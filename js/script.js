@@ -11,7 +11,7 @@ var height = 845,
 
 var margins = {
     left: 30,
-    right: 0,
+    right: 10,
     top: 0,
     bottom: 0,
 };
@@ -21,7 +21,7 @@ var barheight = 18,
 
 var svg = d3.select("#map")
     .attr('height', height)
-    .attr('width', width);
+    .attr('width', width + margins.left + margins.right);
 
 var path = d3.geoPath();
 
@@ -64,6 +64,7 @@ var forceNeighbors = [
 
 var commaize = d3.format(',');
 var percentize = d3.format('.2%');
+var K = d3.formatPrefix(',.0', 1e3);
 
 var opacity = d3.scaleLinear()
     .domain([1, 2e5])
@@ -73,7 +74,7 @@ var opacity = d3.scaleLinear()
 var redblue = d3.scaleLinear()
     .clamp(true)
     .domain([0.25, 0.5, 0.75])
-    .range(['#1a80c4', '#964372', '#cc3d3d']);
+    .range(['#cc3d3d', '#964372', '#1a80c4']);
 
 var x = d3.scaleLinear()
     .range([0, width - margins.left - margins.right])
@@ -225,6 +226,61 @@ function program(error, topo, csv) {
     var infobox = d3.select('#infobox');
     infobox.select('table').append('tbody');
 
+    var legPct = [0.3, 0.4, 0.5, 0.6, 0.7];
+    var legPop = [1000, 51000, 101000, 151000, 201000];
+    var legUnit = 18;
+
+    var legend = svg.append('g')
+        .classed('legend', true)
+        .attr('transform', 'translate(' + (width - margins.right - (legUnit * legPct.length)) + ',525)');
+
+    legend.append('rect')
+        .attr('height', legPop.length * legUnit)
+        .attr('width', legPct.length * legUnit)
+        .style('fill', '#fff');
+
+    var legRows = legend.selectAll('g')
+        .data(legPct)
+        .enter().append('g')
+        .attr('transform', (_, i) => 'translate(' + (i * legUnit) + ')');
+
+    legRows
+        .selectAll('rect')
+        .data(pct => legPop.map(pop => ({pop: pop, pct: pct})))
+        .enter().append('rect')
+            .attr('y', (_, i) => i * legUnit)
+            .style('fill-opacity', d => opacity(d.pop))
+            .style('fill', d => redblue(d.pct))
+            .attr('height', legUnit)
+            .attr('width', legUnit);
+
+    legRows.append('text')
+        .classed('pct', true)
+        .text(d => percentize(d).slice(0, -4) + '%')
+        .attr('transform', 'translate(' + (legUnit/2) + ') rotate(-45)');
+
+    legRows.filter((_, i) => i === 0)
+        .selectAll('.pop')
+        .data(legPop)
+        .enter().append('text')
+        .style('text-anchor', 'end')
+        .classed('pop', true)
+        .text(d => K(d))
+        .attr('y', (_, i)=> i * legUnit)
+        .attr('dx', '-2')
+        .attr('dy', '1.25em');
+
+    legend.append('text')
+        .text('Two-party vote')
+        .attr('dy', legUnit * -1.5)
+        .attr('dx', legPct.length * legUnit / 2)
+        .style('text-anchor', 'middle');
+
+    legend.append('text')
+        .text('Total vote')
+        .style('text-anchor', 'middle')
+        .attr('transform', 'translate(' + (legUnit * -1.75) + ',' + (legUnit * 2.5) + ') rotate(-90)');
+
     /**
      * Run the map
      */
@@ -294,7 +350,7 @@ function program(error, topo, csv) {
             selection
                 .style('fill', function(d) {
                     var x = results.get(d.properties.id);
-                    return redblue(+x['r' + year] / (+x['r' + year] + (+x['d' + year])));
+                    return redblue(+x['d' + year] / (+x['r' + year] + (+x['d' + year])));
                 })
                 .style('fill-opacity', d =>
                     opacity(results.get(d.properties.id)['tot' + year])
@@ -304,7 +360,7 @@ function program(error, topo, csv) {
         var stateFill = function(selection) {
             var year = this;
             selection.style('fill', (d, i) =>
-                counts[year].ev.d[i] > 0 ? redblue.range()[0] : redblue.range()[2]
+                counts[year].ev.d[i] > 0 ? redblue.range()[2] : redblue.range()[0]
             );
         };
 
@@ -496,6 +552,7 @@ function program(error, topo, csv) {
                 cg.style('display', 'inherit');
                 states.style('fill-opacity', 0);
                 labels.style('visibility', 'hidden');
+                legend.style('visibility', null);
 
             } else {
                 states
@@ -504,6 +561,7 @@ function program(error, topo, csv) {
 
                 cg.style('display', 'none');
                 labels.style('visibility', null);
+                legend.style('visibility', 'hidden');
             }
         }
 
