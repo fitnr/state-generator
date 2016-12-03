@@ -189,7 +189,7 @@ function program(error, topo, csv) {
     };
 
     var total = reps + (3 + stateCount) * 2,
-        win = Math.ceil(total/2);
+        win = Math.floor(total / 2) + 1;
 
     svg.append('g')
         .attr('class', 'sg-counties')
@@ -518,10 +518,9 @@ function program(error, topo, csv) {
             .attr('x', (_, i) => i === 0 ? 0 : x(total));
 
         newRects.append('text')
-            .text(d => d.ev)
-            .attr('dx', (d, i) => i === 0 ? -barbuf : barbuf)
             .attr('dy', '1em')
-            .attr('class', 'sg-ev');
+            .attr('dx', (_, i) => i === 0 ? -barbuf : barbuf)
+            .classed('sg-ev', true);
 
         rects = rects
             .merge(newRects)
@@ -535,6 +534,7 @@ function program(error, topo, csv) {
 
         rects.select('.sg-ev')
             .transition(transition)
+            .text(d => d.ev)
             .attr('x', (d, i) => i === 0 ? x(d.ev) : x(total - d.ev));
 
         function draw() {
