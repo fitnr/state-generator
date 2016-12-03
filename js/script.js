@@ -207,6 +207,11 @@ function program(error, topo, csv) {
         .append('path')
         .attr('class', 'sg-boundary');
 
+    var tipping = svg.append('g')
+        .classed('straw-camel-s-back', true)
+        .append('path')
+        .classed('sg-tipping', true);
+
     var labels = svg.append('g').classed('sg-labels', true);
     labels.append('g').classed('stroke', true);
     labels.append('g').classed('fill', true);
@@ -308,9 +313,33 @@ function program(error, topo, csv) {
                 d: evs[c].map((ev, i) => (vote.d[i] > vote.r[i]) ? ev : 0),
                 r: evs[c].map((ev, i) => (vote.r[i] > vote.d[i]) ? ev : 0),
             };
+            vote.sum = {
+                d: d3.sum(vote.d),
+                r: d3.sum(vote.r)
+            };
+            ev.sum = {
+                d: d3.sum(ev.d),
+                r: d3.sum(ev.r)
+            };
+
+            // tipping point state
+            var tippingState = -1;
+            var winningParty = ev.sum.d > ev.sum.r ? 'd' : (ev.sum.d === ev.sum.r ? 0 : 'r');
+            if (winningParty)
+                vote[winningParty]
+                    .map((d, i) => [i, d / vote.tot[i]])
+                    .sort((a, b) => b[1] - a[1])
+                    .map(d => [d[0], ev[winningParty][d[0]]])
+                    .reduce(function(sum, d) {
+                        sum = sum + d[1];
+                        tippingState = (sum > win && tippingState === -1) ? d[0] : tippingState;
+                        return sum + d[1];
+                    }, 0);
+
             obj[year] = {
                 vote: vote,
-                ev: ev
+                ev: ev,
+                tip: tippingState,
             };
             return obj;
         }, {});
@@ -326,6 +355,7 @@ function program(error, topo, csv) {
                     2000: evs[2000][j],
                     2010: evs[2010][j],
                 },
+                tip: elections.reduce((obj, year) => (obj[year] = j === counts[year].tip, obj), {}),
                 // force Hawaii to be called Hawaii
                 name: names.indexOf('Hawaii') === -1 ? random(names) : 'Hawaii',
                 // not really a hash, but a string representation of the counties,
@@ -338,11 +368,11 @@ function program(error, topo, csv) {
         var votes = elections.map(year => ({
             year: year,
             data: ['d', 'r'].map(party => ({
-                    name: candidates[year][party],
-                    party: party,
-                    vote: d3.sum(counts[year].vote[party]),
-                    ev: d3.sum(counts[year].ev[party]),
-                    state: counts[year].ev[party].filter(y => y > 0).length,
+                name: candidates[year][party],
+                party: party,
+                vote: counts[year].vote.sum[party],
+                ev: counts[year].ev.sum[party],
+                state: counts[year].ev[party].filter(y => y > 0).length,
             }))
         }));
 
@@ -379,16 +409,15 @@ function program(error, topo, csv) {
         var mouseover = function(d, i) {
             var year = getYear();
             var data = ['d', 'r'].map(party => ({
-                    party: party,
-                    winner: counts[year].ev[party][i] > 0,
-                    // name, votes, pct, EV
-                    data: [
-                        candidates[year][party],
-                        commaize(counts[year].vote[party][i]),
-                        percentize(counts[year].vote[party][i] / counts[year].vote.tot[i]),
-                        counts[year].ev[party][i]
-                    ]
-                })
+                party: party,
+                winner: counts[year].ev[party][i] > 0,
+                // name, votes, pct, EV
+                data: [
+                    candidates[year][party],
+                    commaize(counts[year].vote[party][i]),
+                    percentize(counts[year].vote[party][i] / counts[year].vote.tot[i]),
+                    counts[year].ev[party][i]
+                ]})
             );
 
             var rows = infobox.select('tbody')
@@ -546,6 +575,10 @@ function program(error, topo, csv) {
             var cg = d3.selectAll('.sg-counties');
 
             labels.selectAll('tspan:last-child').text(d => d.properties.ev[census(year)]);
+
+            tipping
+                .datum(statefeatures.filter(d => d.properties.tip[year])[0])
+                .attr('d', path);
 
             if (geography === 'county') {
                 d3.selectAll('.sg-county')
