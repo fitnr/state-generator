@@ -76,6 +76,9 @@ var redblue = d3.scaleLinear()
     .domain([0.25, 0.5, 0.75])
     .range(['#cc3d3d', '#964372', '#1a80c4']);
 
+var darkred = '#b22d2c';
+var darkblue = '#215e93';
+
 var x = d3.scaleLinear()
     .range([0, width - margins.left - margins.right])
     .domain([0, 538]);
@@ -355,6 +358,8 @@ function program(error, topo, csv) {
                     2000: evs[2000][j],
                     2010: evs[2010][j],
                 },
+                dpct: elections.reduce((obj, year) => (obj[year] = counts[year].vote.d[j] / counts[year].vote.tot[j], obj), {}),
+                rpct: elections.reduce((obj, year) => (obj[year] = counts[year].vote.r[j] / counts[year].vote.tot[j], obj), {}),
                 tip: elections.reduce((obj, year) => (obj[year] = j === counts[year].tip, obj), {}),
                 // force Hawaii to be called Hawaii
                 name: names.indexOf('Hawaii') === -1 ? random(names) : 'Hawaii',
@@ -390,9 +395,14 @@ function program(error, topo, csv) {
 
         var stateFill = function(selection) {
             var year = this;
-            selection.style('fill', (d, i) =>
-                counts[year].ev.d[i] > 0 ? redblue.range()[2] : redblue.range()[0]
-            );
+            selection.style('fill', function(d, i) {
+                if (d.properties.dpct[year] > 0.60)
+                    return darkblue;
+                else if (d.properties.rpct[year] > 0.60)
+                    return darkred;
+                else
+                    return counts[year].ev.d[i] > 0 ? redblue.range()[2] : redblue.range()[0];
+            });
         };
 
         var mousemove = function() {
