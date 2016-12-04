@@ -83,7 +83,7 @@ stateMaker.prototype.freezeState = function(d) {
 /**
  * divide the country into max <n> states
  */
-stateMaker.prototype.divideCountry = function(seeds, options) {
+stateMaker.prototype.divide = function(seeds, options) {
     options = options || {assign: true};
     seeds.forEach(function(seed) { this.addState([seed]); }, this);
 
@@ -105,7 +105,7 @@ stateMaker.prototype.divideCountry = function(seeds, options) {
         while (this.unselected.size > 0)
             Array.from(this.unselected).forEach(this.assign, this);
 
-    return this._states;
+    return this;
 };
 
 stateMaker.prototype.enlargeState = function(state, options) {

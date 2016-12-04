@@ -124,13 +124,13 @@ function seeds(method, features) {
     }
     else if (method === 'state') {
         var byOriginalState = ids.reduce(function(obj, geoid, i) {
-                if (excludes.indexOf(geoid) > -1)
-                    return obj;
-                var key = geoid.substr(0, 2);
-                obj[key] = obj[key] || [];
-                obj[key].push(i);
+            if (excludes.indexOf(geoid) > -1)
                 return obj;
-            }, {});
+            var key = geoid.substr(0, 2);
+            obj[key] = obj[key] || [];
+            obj[key].push(i);
+            return obj;
+        }, {});
 
         seeds = Object.keys(byOriginalState).map(d => random(byOriginalState[d]));
     }
@@ -150,21 +150,26 @@ function getYear() {
 }
 
 function make(features, neighbors, options) {
-    var map = d3.map(features, d => d.properties.id);
     var seedindices = seeds((options || {}).method, features);
-
     var maker = new stateMaker(features, neighbors, {prob: prob, popField: '10'});
 
-    maker.addState([features.indexOf(map.get('02000'))]);
-    maker.addState(hawaii.map(geoid => features.indexOf(map.get(geoid))));
-
-    var dc = maker.addState([features.indexOf(map.get('11001'))]);
-
-    // extra rep for D.C.
-    maker.freezeState(dc)
-        .divideCountry(seedindices);
-
-    return maker;
+    var ak = maker.addState(features
+        .filter(d => d.properties.id === '02000')
+        .map(d => features.indexOf(d))
+    );
+    var hi = maker.addState(features
+        .map((d, i) => hawaii.indexOf(d.properties.id) > -1 ? i : -1)
+        .filter(d => d > -1)
+    );
+    var dc = maker.addState(features
+        .filter(d => d.properties.id === '11001')
+        .map(d => features.indexOf(d))
+    );
+ 
+    return maker.freezeState(dc)
+        .freezeState(hi)
+        .freezeState(ak)
+        .divide(seedindices);
 }
 
 function program(error, topo, csv) {
@@ -215,7 +220,6 @@ function program(error, topo, csv) {
         .attr('class', 'sg-boundary');
 
     var tipping = svg.append('g')
-        .classed('straw-camel-s-back', true)
         .append('path')
         .classed('sg-tipping', true);
 
