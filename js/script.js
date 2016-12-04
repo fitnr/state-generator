@@ -178,7 +178,7 @@ function program(error, topo, csv) {
     var features = topojson.feature(topo, topo.objects.counties).features;
     var neighbors = topojson.neighbors(topo.objects.counties.geometries);
     var results = d3.map(csv, d => d.GEOID);
-    var elections = Object.keys(candidates).sort((a, b) => a - b);
+    var elections = Object.keys(candidates).sort((a, b) => b - a);
     var ids = features.map(d => d.properties.id);
 
     function add_connection(id1, id2) {
