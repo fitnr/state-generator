@@ -99,20 +99,14 @@ dbf/2004.dbf: results/2004.csv | dbf
 
 dbf/2000.dbf: results/2000.csv | dbf
 	@rm -f $(basename $@).{idm,ind}
-	ogr2ogr $@ $< -dialect sqlite -sql "SELECT FIPS GEOID, CAST(BUSH as INTEGER) r00, CAST(GORE as INTEGER) d00, CAST(TOTAL_VOTE as INTEGER) tot00 \
-		FROM \"2000\" WHERE STATE_NAME != 'Alaska'"
-	ogr2ogr $@ $< -append -update -dialect sqlite \
-		-sql "SELECT '02000' GEOID, \
-		SUM(CAST(BUSH as INTEGER)) r00, \
-		SUM(CAST(GORE as INTEGER)) d00, \
-		SUM(CAST(TOTAL_VOTE as INTEGER)) tot00 \
-		FROM \"2000\" WHERE STATE_NAME = 'Alaska'"
+	ogr2ogr $@ $< -dialect sqlite -sql "SELECT FIPS GEOID, CAST(BUSH as INTEGER) r2000, CAST(GORE as INTEGER) d2000, CAST(TOTAL_VOTE as INTEGER) t2000 \
+		FROM \"2000\""
 	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"2000\" SET GEOID = '46102' WHERE GEOID = '46113'"
 	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"2000\" SET GEOID = '12086' WHERE GEOID = '12025'"
 	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"2000\" SET \
-		r00 = (SELECT SUM(r00) FROM \"2000\" WHERE GEOID IN ('51560', '51005')), \
-		d00 = (SELECT SUM(d00) FROM \"2000\" WHERE GEOID IN ('51560', '51005')), \
-		tot00 = (SELECT SUM(tot00) FROM \"2000\" WHERE GEOID IN ('51560', '51005')) \
+		r2000 = (SELECT SUM(r2000) FROM \"2000\" WHERE GEOID IN ('51560', '51005')), \
+		d2000 = (SELECT SUM(d2000) FROM \"2000\" WHERE GEOID IN ('51560', '51005')), \
+		t2000 = (SELECT SUM(t2000) FROM \"2000\" WHERE GEOID IN ('51560', '51005')) \
 		WHERE GEOID = '51005'"
 	ogrinfo $(@D) -sql 'CREATE INDEX ON "2000" USING GEOID'
 
