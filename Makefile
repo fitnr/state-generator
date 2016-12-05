@@ -29,17 +29,18 @@ geo/counties.geojson: geo/counties.shp $(foreach x,90 00 10,dbf/DEC_$x.dbf)
 			LEFT JOIN 'dbf'.DEC_00 AS dec00 USING (GEOID) \
 			LEFT JOIN 'dbf'.DEC_10 AS dec10 USING (GEOID)" 
 
-files/state-generator-results.csv: $(foreach x,00 04 08 12 16,dbf/20$(x).dbf) | files
+files/state-generator-results.csv: dbf/1996.dbf $(foreach x, 00 04 08 12 16,dbf/20$(x).dbf) | files
 	@rm -f $@
 	ogr2ogr -f CSV $@ $(<D) -dialect sqlite \
 		-sql 'SELECT a.GEOID GEOID, a.rep r16, a.dem d16, a.tot tot16, \
-		b.r12, b.d12, b.tot12, c.r08, c.d08, c.tot08, \
-		d.r04, d.d04, d.tot04, e.r00, e.d00, e.tot00 \
+		r12, d12, tot12, r08, d08, tot08, r04, d04, tot04, \
+		r00, d00, tot00, r96, d96, tot96 \
 		FROM "2016" a \
-		LEFT JOIN "2012" b USING (GEOID) \
-		LEFT JOIN "2008" c USING (GEOID) \
-		LEFT JOIN "2004" d USING (GEOID) \
-		LEFT JOIN "2000" e USING (GEOID) \
+		LEFT JOIN "2012" USING (GEOID) \
+		LEFT JOIN "2008" USING (GEOID) \
+		LEFT JOIN "2004" USING (GEOID) \
+		LEFT JOIN "2000" USING (GEOID) \
+		LEFT JOIN "1996" USING (GEOID) \
 		WHERE GEOID NOT IN ("46113", "51515")'
 
 dbf/2016.dbf: results/2016.csv | dbf
@@ -114,6 +115,20 @@ dbf/2000.dbf: results/2000.csv | dbf
 		tot00 = (SELECT SUM(tot00) FROM \"2000\" WHERE GEOID IN ('51560', '51005')) \
 		WHERE GEOID = '51005'"
 	ogrinfo $(@D) -sql 'CREATE INDEX ON "2000" USING GEOID'
+
+dbf/1996.dbf: results/1996.csv | dbf
+	@rm -f $(basename $@).{idm,ind}
+	ogr2ogr $@ $< -dialect sqlite -sql "SELECT fips GEOID, CAST(d96 as INTEGER) d96, \
+		CAST(r96 as INTEGER) r96, CAST(t96 as INTEGER) tot96 \
+		FROM \"1996\""
+	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"1996\" SET GEOID = '46102' WHERE GEOID = '46113'"
+	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"1996\" SET GEOID = '12086' WHERE GEOID = '12025'"
+	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"1996\" SET \
+		r00 = (SELECT SUM(r00) FROM \"1996\" WHERE GEOID IN ('51560', '51005')), \
+		d00 = (SELECT SUM(d00) FROM \"1996\" WHERE GEOID IN ('51560', '51005')), \
+		tot00 = (SELECT SUM(tot00) FROM \"1996\" WHERE GEOID IN ('51560', '51005')) \
+		WHERE GEOID = '51005'"
+	ogrinfo $(@D) -sql 'CREATE INDEX ON "1996" USING GEOID'
 
 geo/counties.shp: $(DIR)/COUNTY/cb_2014_us_county_500k.shp $(DIR)/STATE/cb_2014_us_state_500k.shp | geo
 	@rm -f $(basename $@).{idm,ind}
