@@ -295,15 +295,15 @@ function program(error, topo, csv) {
         .attr('transform', 'translate(' + (legUnit * -1.75) + ',' + (legUnit * 2.5) + ') rotate(-90)');
 
     // tipping point legend
-    var generalLegend = legend.append('g')
-        .classed('legend-general', true);
+    var stateLegend = legend.append('g')
+        .classed('legend-state', true);
 
-    generalLegend.append('rect')
+    stateLegend.append('rect')
         .classed('sg-tipping', true)
         .attr('width', legUnit)
         .attr('height', legUnit);
 
-    generalLegend.append('text')
+    stateLegend.append('text')
         .attr('x', legUnit)
         .attr('dx', 4)
         .attr('dy', '1.25em')
@@ -316,18 +316,18 @@ function program(error, topo, csv) {
         {color: darkred, text: '(over 60%)'},
     ];
 
-    var stateLegend = legend.append('g')
+    var stateFillLegend = stateLegend.append('g')
         .classed('legend-state', true)
         .selectAll('g').data(stateFillData)
         .enter().append('g')
         .attr('transform', (_, i) => 'translate(0,' + (1.5 * legUnit + i * legUnit) + ')');
 
-    stateLegend.append('rect')
+    stateFillLegend.append('rect')
         .style('fill', d => d.color)
         .attr('width', legUnit)
         .attr('height', legUnit);
 
-    stateLegend.append('text')
+    stateFillLegend.append('text')
         .attr('x', legUnit)
         .attr('dx', 4)
         .attr('dy', '1.25em')
@@ -432,7 +432,7 @@ function program(error, topo, csv) {
                     return redblue(+x['d' + year] / (+x['r' + year] + (+x['d' + year])));
                 })
                 .style('fill-opacity', d =>
-                    opacity(results.get(d.properties.id)['tot' + year])
+                    opacity(results.get(d.properties.id)['t' + year])
                 );
         };
 
@@ -645,6 +645,7 @@ function program(error, topo, csv) {
                 cg.style('visibility', null);
                 labels.style('visibility', 'hidden');
                 stateLegend.style('visibility', 'hidden');
+                tipping.style('visibility', 'hidden');
 
             } else {
                 states
@@ -658,6 +659,7 @@ function program(error, topo, csv) {
                 cg.style('visibility', 'hidden');
                 labels.style('visibility', null);
                 stateLegend.style('visibility', null);
+                tipping.style('visibility', null);
             }
         }
 
