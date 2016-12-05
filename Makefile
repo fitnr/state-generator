@@ -32,9 +32,13 @@ geo/counties.geojson: geo/counties.shp $(foreach x,90 00 10,dbf/DEC_$x.dbf)
 files/state-generator-results.csv: dbf/1996.dbf $(foreach x, 00 04 08 12 16,dbf/20$(x).dbf) | files
 	@rm -f $@
 	ogr2ogr -f CSV $@ $(<D) -dialect sqlite \
-		-sql 'SELECT a.GEOID GEOID, a.rep r16, a.dem d16, a.tot tot16, \
-		r12, d12, tot12, r08, d08, tot08, r04, d04, tot04, \
-		r00, d00, tot00, r96, d96, tot96 \
+		-sql 'SELECT a.GEOID GEOID, \
+		a.rep r2016, a.dem d2016, a.tot t2016, \
+		r12 r2012, d12 d2012, tot12 t2012, \
+		r08 r2008, d08 d2008, tot08 t2008, \
+		r04 r2004, d04 d2004, tot04 t2004, \
+		r2000, d2000, t2000, \
+		r96 r1996, d96 d1996, tot96 t1996 \
 		FROM "2016" a \
 		LEFT JOIN "2012" USING (GEOID) \
 		LEFT JOIN "2008" USING (GEOID) \

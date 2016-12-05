@@ -115,7 +115,6 @@ var excludes = ['02000', '11001'].concat(hawaii);
 var largeCounties = '06037|17031|48201|04013|06073|12086|36047|48113|53033|32003|48439|06085|12011|26163|48029|06001|42101|25017|36103|06067|36005|12099|12057|39035|42003|12095|39049|27053|51059|06013|49035|24031|29189|04019|37119|13121|55079|37183|06019|47157|09001|12103|36029|18097|09003|12031|09009|41051';
 
 var census = (year => Math.floor((+year - 1) / 10) * 10);
-var twodigityear = (year => ('0' + (year % 100)).substr(-2));
 
 function seeds(method, features) {
     var seeds;
@@ -350,13 +349,12 @@ function program(error, topo, csv) {
         };
 
         var counts = elections.reduce(function(obj, year) {
-            var c = census(year),
-                y = twodigityear(year);
+            var c = census(year);
 
             var vote = {
-                d: maker.voteCount('d' + y),
-                r: maker.voteCount('r' + y),
-                tot: maker.voteCount('tot' + y),
+                d: maker.voteCount('d' + year),
+                r: maker.voteCount('r' + year),
+                tot: maker.voteCount('t' + year),
             };
             var ev = {
                 d: evs[c].map((ev, i) => (vote.d[i] > vote.r[i]) ? ev : 0),
@@ -427,7 +425,7 @@ function program(error, topo, csv) {
         }));
 
         var countyFill = function(selection) {
-            var year = twodigityear(this);
+            var year = this;
             selection
                 .style('fill', function(d) {
                     var x = results.get(d.properties.id);
