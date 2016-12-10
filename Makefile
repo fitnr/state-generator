@@ -45,11 +45,12 @@ files/state-generator-results.csv: dbf/1996.dbf $(foreach x, 00 04 08 12 16,dbf/
 		LEFT JOIN "2004" USING (GEOID) \
 		LEFT JOIN "2000" USING (GEOID) \
 		LEFT JOIN "1996" USING (GEOID) \
-		WHERE GEOID NOT IN ("46113", "51515")'
+		WHERE GEOID NOT IN ("46102", "51515")'
 
 dbf/2016.dbf: results/2016.csv | dbf
 	@rm -f $(basename $@).{idm,ind}
 	ogr2ogr $@ $< -select GEOID,NAME,tot,rep,dem
+	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"$(basename $(@F))\" SET GEOID='46113' WHERE GEOID='46102'"
 	@rm -f $(basename $@).qix
 	ogrinfo $(@D) -sql 'CREATE INDEX ON "2016" USING GEOID'
 
@@ -57,7 +58,7 @@ dbf/2012.dbf: results/2012.csv | dbf
 	@rm -f $(basename $@).{idm,ind}
 	ogr2ogr $@ $< -overwrite -dialect sqlite -sql "SELECT GEOID, CAST(Romney as INTEGER) r12, CAST(Obama as INTEGER) d12, CAST(total as INTEGER) tot12 \
         FROM \"2012\""
-	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"2012\" SET GEOID='46102' WHERE GEOID='46113'"
+	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"$(basename $(@F))\" SET GEOID='46113' WHERE GEOID='46102'"
 	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"2012\" SET \
 		r12 = (SELECT SUM(r12) FROM \"2012\" WHERE GEOID IN ('51515', '51019')), \
 		d12 = (SELECT SUM(d12) FROM \"2012\" WHERE GEOID IN ('51515', '51019')), \
@@ -75,7 +76,7 @@ dbf/2008.dbf: results/2008.csv | dbf
         SUM(CAST(VOTE_DEM as INTEGER)) d08, \
         SUM(CAST(TOTAL_VOTE as INTEGER)) tot08 \
         FROM \"2008\" WHERE STATE = 'AK'"
-	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"2008\" SET GEOID = '46102' WHERE GEOID = '46113'"
+	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"$(basename $(@F))\" SET GEOID='46113' WHERE GEOID='46102'"
 	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"2008\" SET \
 		r08 = (SELECT SUM(r08) FROM \"2008\" WHERE GEOID IN ('51515', '51019')), \
 		d08 = (SELECT SUM(d08) FROM \"2008\" WHERE GEOID IN ('51515', '51019')), \
@@ -93,7 +94,7 @@ dbf/2004.dbf: results/2004.csv | dbf
 		SUM(CAST(VOTE_DEM as INTEGER)) d04, \
 		SUM(CAST(TOTAL_VOTE as INTEGER)) tot04 \
 		FROM \"2004\" WHERE SUBSTR(FIPS, 1, 2) = '02'"
-	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"2004\" SET GEOID = '46102' WHERE GEOID = '46113'"
+	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"$(basename $(@F))\" SET GEOID='46113' WHERE GEOID='46102'"
 	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"2004\" SET \
 		r04 = (SELECT SUM(r04) FROM \"2004\" WHERE GEOID IN ('51515', '51019')), \
 		d04 = (SELECT SUM(d04) FROM \"2004\" WHERE GEOID IN ('51515', '51019')), \
@@ -105,7 +106,7 @@ dbf/2000.dbf: results/2000.csv | dbf
 	@rm -f $(basename $@).{idm,ind}
 	ogr2ogr $@ $< -dialect sqlite -sql "SELECT FIPS GEOID, CAST(BUSH as INTEGER) r2000, CAST(GORE as INTEGER) d2000, CAST(TOTAL_VOTE as INTEGER) t2000 \
 		FROM \"2000\""
-	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"2000\" SET GEOID = '46102' WHERE GEOID = '46113'"
+	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"$(basename $(@F))\" SET GEOID='46113' WHERE GEOID='46102'"
 	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"2000\" SET GEOID = '12086' WHERE GEOID = '12025'"
 	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"2000\" SET \
 		r2000 = (SELECT SUM(r2000) FROM \"2000\" WHERE GEOID IN ('51560', '51005')), \
@@ -119,7 +120,7 @@ dbf/1996.dbf: results/1996.csv | dbf
 	ogr2ogr $@ $< -dialect sqlite -sql "SELECT fips GEOID, CAST(d96 as INTEGER) d96, \
 		CAST(r96 as INTEGER) r96, CAST(t96 as INTEGER) tot96 \
 		FROM \"1996\""
-	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"1996\" SET GEOID = '46102' WHERE GEOID = '46113'"
+	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"$(basename $(@F))\" SET GEOID='46113' WHERE GEOID='46102'"
 	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"1996\" SET GEOID = '12086' WHERE GEOID = '12025'"
 	ogrinfo $(@D) -dialect sqlite -sql "UPDATE \"1996\" SET \
 		r00 = (SELECT SUM(r00) FROM \"1996\" WHERE GEOID IN ('51560', '51005')), \
@@ -133,9 +134,11 @@ geo/counties.shp: $(DIR)/COUNTY/cb_2014_us_county_500k.shp $(DIR)/STATE/cb_2014_
 	ogr2ogr $@ $< -t_srs EPSG:4326 -select GEOID,NAME -where "GEOID NOT LIKE '02%' \
 		AND GEOID NOT LIKE '72%' \
 		AND GEOID NOT LIKE '78%' \
-		AND GEOID NOT LIKE '60%'"
+		AND GEOID NOT LIKE '60%' \
+		AND GEOID NOT LIKE '69%' \
+		AND GEOID NOT LIKE '66%'"
 	ogr2ogr $@ $(word 2,$^) -update -append -t_srs EPSG:4326 -select GEOID,NAME -where "GEOID = '02'"
-	ogrinfo $(@D) -dialect sqlite -sql "UPDATE "$(basename $(@F))" SET GEOID='46102' WHERE GEOID='46113'"
+	ogrinfo $(@D) -dialect sqlite -sql "UPDATE "$(basename $(@F))" SET GEOID='46113' WHERE GEOID='46102'"
 	ogrinfo $(@D) -dialect sqlite -sql "UPDATE "$(basename $(@F))" SET GEOID='02000' WHERE GEOID='02'"
 	ogrinfo $(@D) -dialect sqlite -sql "UPDATE "$(basename $(@F))" SET NAME='DC' WHERE NAME='District of Columbia'"
 	ogrinfo $(@D) -sql 'CREATE INDEX ON $(basename $(@F)) USING GEOID'
@@ -162,7 +165,7 @@ census/DEC_90.csv: census/99C8_00.txt
 	sed -E 's/,//g; s/([0-9]+) +/\1,/g' | \
 	grep -vE '^(01|0[3-9]|1[0-9]|[2-9][0-9]),' | \
 	grep -vE -e '^02[0-9][0-9][0-9],' | \
-	sed 's/^46113/46102/;s/^02/02000/' \
+	sed 's/^46102/46113/;s/^02/02000/' \
 	>> $@
 
 files geo dbf:; mkdir -p $@
