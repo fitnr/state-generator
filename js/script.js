@@ -88,8 +88,7 @@ var darkred = '#b22d2c';
 var darkblue = '#215e93';
 
 var x = d3.scaleLinear()
-    .range([0, width - margins.left - margins.right])
-    .domain([0, 538]);
+    .range([0, width - margins.left - margins.right]);
 
 // probability functions
 var countScale = d3.scalePow()
@@ -107,159 +106,7 @@ function prob(count, pop) {
     return (countScale(count) + populationScale(pop)) / 2;
 }
 
-var stateCount = 48,
-    reps = 436;
-
-var hawaii = ['15001', '15003', '15005', '15007', '15009'];
-var excludes = ['02000', '11001'].concat(hawaii);
-var largeCounties = '06037|17031|48201|04013|06073|12086|36047|48113|53033|32003|48439|06085|12011|26163|48029|06001|42101|25017|36103|06067|36005|12099|12057|39035|42003|12095|39049|27053|51059|06013|49035|24031|29189|04019|37119|13121|55079|37183|06019|47157|09001|12103|36029|18097|09003|12031|09009|41051';
-
-var metros = '36027,36079,36059,36103,34013,34019,34027,34035,34037,34039,42103,34003,34017,34023,34025,34029,34031,36005,36047,36061,36071,36081,36085,36087,36119|06059,06037|17031,17043,17063,17093,17111,17197,17037,17089,18073,18089,18111,18127,17097,55059|48085,48113,48121,48139,48231,48257,48397,48221,48251,48367,48425,48439,48497|48015,48039,48071,48157,48167,48201,48291,48339,48473|24021,24031,11001,24009,24017,24033,51013,51043,51047,51059,51061,51107,51153,51157,51177,51179,51187,51510,51600,51610,51630,51683,51685,54037|34005,34007,34015,42017,42029,42091,42045,42101,10003,24015,34033|12011,12086,12099|13013,13015,13035,13045,13057,13063,13067,13077,13085,13089,13097,13113,13117,13121,13135,13143,13149,13151,13159,13171,13199,13211,13217,13223,13227,13231,13247,13255,13297|25021,25023,25025,25009,25017,33015,33017|06001,06013,06075,06081,06041|04013,04021|06065,06071|26163,26087,26093,26099,26125,26147|53033,53061,53053|27003,27019,27025,27037,27053,27059,27079,27095,27123,27139,27141,27143,27163,27171,55093,55109|06073|12053,12057,12101,12103|08001,08005,08014,08019,08031,08035,08039,08047,08059,08093|17005,17013,17027,17083,17117,17119,17133,17163,29071,29099,29113,29183,29189,29219,29510|24003,24005,24013,24025,24027,24035,24510|37025,37071,37097,37109,37119,37159,37179,45023,45057,45091|41005,41009,41051,41067,41071,53011,53059|12069,12095,12097,12117|48013,48019,48029,48091,48187,48259,48325,48493|42003,42005,42007,42019,42051,42125,42129|06017,06061,06067,06113|18029,18115,18161,21015,21023,21037,21077,21081,21117,21191,39015,39017,39025,39061,39165|32003|20091,20103,20107,20121,20209,29013,29025,29037,29047,29049,29095,29107,29165,29177|39035,39055,39085,39093,39103|39041,39045,39049,39073,39089,39097,39117,39127,39129,39159|48021,48055,48209,48453,48491|18011,18013,18057,18059,18063,18081,18095,18097,18109,18133,18145|06069,06085|47015,47021,47037,47043,47081,47111,47119,47147,47149,47159,47165,47169,47187,47189|37053,37073,51073,51093,51095,51115,51199,51550,51650,51700,51710,51735,51740,51800,51810,51830|25005,44001,44003,44005,44007,44009|55079,55089,55131,55133|12003,12019,12031,12089,12109|40017,40027,40051,40081,40083,40087,40109|05035,28009,28033,28093,28137,28143,47047,47157,47167|18019,18043,18061,18143,18175,21029,21103,21111,21185,21211,21215,21223|37069,37101,37183|51007,51033,51036,51041,51053,51075,51085,51087,51101,51127,51145,51149,51183,51570,51670,51730,51760|22051,22071,22075,22087,22089,22093,22095,22103|09003,09007,09013|49035,49045';
-
-var census = (year => Math.floor((+year - 1) / 10) * 10);
-
-function seeds(method, features) {
-    var seeds;
-    var ids = features.map(d => d.properties.id);
-
-    if (method === 'large') {
-        seeds = largeCounties.split('|')
-            .map(geoid => ids.indexOf(geoid));
-    }
-    else if (method === 'state') {
-        var byOriginalState = ids.reduce(function(obj, geoid, i) {
-            if (excludes.indexOf(geoid) > -1)
-                return obj;
-            var key = geoid.substr(0, 2);
-            obj[key] = obj[key] || [];
-            obj[key].push(i);
-            return obj;
-        }, {});
-
-        seeds = Object.keys(byOriginalState).map(d => random(byOriginalState[d]));
-    }
-    else if (method === 'metro') {
-        seeds = metros.split('|')
-            .map(d => d.split(',').map(geoid => ids.indexOf(geoid))
-        );
-    }
-    else {
-        var excludeIds = new Set(excludes.map(geoid => ids.indexOf(geoid)));
-        seeds = d3.shuffle(
-            d3.range(2, features.length)
-                .filter(i => !excludeIds.has(i))
-            ).slice(0, stateCount);
-    }
-
-    return seeds;
-}
-
-function getYear() {
-    return document.querySelector('[name=year]:checked').value;
-}
-
-function make(features, neighbors, options) {
-    var seedindices = seeds((options || {}).method, features);
-    var maker = new stateMaker(features, neighbors, {prob: prob, popField: '10'});
-
-    var ak = maker.addState(features
-        .filter(d => d.properties.id === '02000')
-        .map(d => features.indexOf(d))
-    );
-    var hi = maker.addState(features
-        .map((d, i) => hawaii.indexOf(d.properties.id) > -1 ? i : -1)
-        .filter(d => d > -1)
-    );
-    var dc = maker.addState(features
-        .filter(d => d.properties.id === '11001')
-        .map(d => features.indexOf(d))
-    );
- 
-    return maker.freezeState(dc)
-        .freezeState(hi)
-        .freezeState(ak)
-        .divide(seedindices);
-}
-
-function program(error, topo, csv) {
-    if (error) throw error;
-
-    var features = topojson.feature(topo, topo.objects.counties).features;
-    var neighbors = topojson.neighbors(topo.objects.counties.geometries);
-    var results = d3.map(csv, d => d.GEOID);
-    var elections = Object.keys(candidates).sort((a, b) => b - a);
-    var ids = features.map(d => d.properties.id);
-
-    function add_connection(id1, id2) {
-        var idx1 = ids.indexOf(id1);
-        var idx2 = ids.indexOf(id2);
-        if (idx1 === -1 || idx2 === -1) {
-            console.log(id1, id2);
-            return;
-        }
-        neighbors[idx2].push(idx1);
-        neighbors[idx1].push(idx2);
-    }
-
-    forceNeighbors.forEach(pair => add_connection.apply(null, pair));
-
-    // e.g. voteCount('d16') returns state-by-state totals for Dem in '16
-    stateMaker.prototype.voteCount = function(key) {
-        return this.states().map(state => this.sum(state, i =>
-            +results.get(this.features[i].properties.id)[key]
-        ));
-    };
-
-    var total = reps + (3 + stateCount) * 2,
-        win = Math.floor(total / 2) + 1;
-
-    svg.append('g')
-        .attr('class', 'sg-counties')
-        .selectAll('path')
-        .data(features).enter()
-        .append("path")
-        .attr('class', 'sg-county')
-        .attr('d', path);
-
-    // set up SVG and DOM
-    var state = svg.append('g').attr('class', 'sg-states');
-
-    var boundary = svg.append('g')
-        .append('path')
-        .attr('class', 'sg-boundary');
-
-    var tipping = svg.append('g')
-        .append('path')
-        .classed('sg-tipping', true);
-
-    var labels = svg.append('g').classed('sg-labels', true);
-    labels.append('g').classed('stroke', true);
-    labels.append('g').classed('fill', true);
-
-    // create bar charts
-    var bars = svg.append('g').classed('sg-bars', true)
-        .attr('transform', 'translate(' + [margins.left, height - (elections.length * (barheight + barbuf))] + ')');
-
-    bars.append('line')
-        .attr('y1', -barbuf)
-        .attr('y2', elections.length * (barheight + barbuf))
-        .attr('x1', x(win))
-        .attr('x2', x(win));
-
-    var transition = d3.transition()
-        .duration(250);
-
-    var infobox = d3.select('#infobox');
-    infobox.select('table').append('tbody');
-
-    var legend = svg.append('g')
-        .classed('legend', true)
-        .attr('transform', 'translate(' + (width - margins.right - (legUnit * legPct.length)) + ',480)');
-
-    var countyLegend = legend.append('g')
-        .classed('legend-county', true)
-        .attr('transform', 'translate(0,' + (legUnit * 3.5) + ')');
-
+function drawCountyLegend(countyLegend, legUnit) {
     var legRows = countyLegend.selectAll('g')
         .data(legPct)
         .enter().append('g')
@@ -300,11 +147,16 @@ function program(error, topo, csv) {
         .text('Total vote')
         .style('text-anchor', 'middle')
         .attr('transform', 'translate(' + (legUnit * -1.75) + ',' + (legUnit * 2.5) + ') rotate(-90)');
+}
 
-    // tipping point legend
-    var stateLegend = legend.append('g')
-        .classed('legend-state', true);
-
+function drawStateLegend(stateLegend, legUnit) {
+    var stateFillData = [
+        {color: redblue.range().slice(-1), text: 'Democratic win'},
+        {color: darkblue, text: '(over 60%)'},
+        {color: redblue.range()[0], text: 'Republican win'},
+        {color: darkred, text: '(over 60%)'},
+    ];
+ 
     stateLegend.append('rect')
         .classed('sg-tipping', true)
         .attr('width', legUnit)
@@ -315,13 +167,6 @@ function program(error, topo, csv) {
         .attr('dx', 4)
         .attr('dy', '1.25em')
         .text('Tipping point state');
-
-    var stateFillData = [
-        {color: redblue.range().slice(-1), text: 'Democratic win'},
-        {color: darkblue, text: '(over 60%)'},
-        {color: redblue.range()[0], text: 'Republican win'},
-        {color: darkred, text: '(over 60%)'},
-    ];
 
     var stateFillLegend = stateLegend.append('g')
         .classed('legend-state', true)
@@ -339,6 +184,167 @@ function program(error, topo, csv) {
         .attr('dx', 4)
         .attr('dy', '1.25em')
         .text(d => d.text);
+}
+
+var hawaii = ['15001', '15003', '15005', '15007', '15009'];
+var excludes = ['02000', '11001'].concat(hawaii);
+var largeCounties = '06037|17031|48201|04013|06073|12086|36047|48113|53033|32003|48439|06085|12011|26163|48029|06001|42101|25017|36103|06067|36005|12099|12057|39035|42003|12095|39049|27053|51059|06013|49035|24031|29189|04019|37119|13121|55079|37183|06019|47157|09001|12103|36029|18097|09003|12031|09009|41051';
+
+var metros = '36027,36079,36059,36103,34013,34019,34027,34035,34037,34039,42103,34003,34017,34023,34025,34029,34031,36005,36047,36061,36071,36081,36085,36087,36119|06059,06037|17031,17043,17063,17093,17111,17197,17037,17089,18073,18089,18111,18127,17097,55059|48085,48113,48121,48139,48231,48257,48397,48221,48251,48367,48425,48439,48497|48015,48039,48071,48157,48167,48201,48291,48339,48473|24021,24031,11001,24009,24017,24033,51013,51043,51047,51059,51061,51107,51153,51157,51177,51179,51187,51510,51600,51610,51630,51683,51685,54037|34005,34007,34015,42017,42029,42091,42045,42101,10003,24015,34033|12011,12086,12099|13013,13015,13035,13045,13057,13063,13067,13077,13085,13089,13097,13113,13117,13121,13135,13143,13149,13151,13159,13171,13199,13211,13217,13223,13227,13231,13247,13255,13297|25021,25023,25025,25009,25017,33015,33017|06001,06013,06075,06081,06041|04013,04021|06065,06071|26163,26087,26093,26099,26125,26147|53033,53061,53053|27003,27019,27025,27037,27053,27059,27079,27095,27123,27139,27141,27143,27163,27171,55093,55109|06073|12053,12057,12101,12103|08001,08005,08014,08019,08031,08035,08039,08047,08059,08093|17005,17013,17027,17083,17117,17119,17133,17163,29071,29099,29113,29183,29189,29219,29510|24003,24005,24013,24025,24027,24035,24510|37025,37071,37097,37109,37119,37159,37179,45023,45057,45091|41005,41009,41051,41067,41071,53011,53059|12069,12095,12097,12117|48013,48019,48029,48091,48187,48259,48325,48493|42003,42005,42007,42019,42051,42125,42129|06017,06061,06067,06113|18029,18115,18161,21015,21023,21037,21077,21081,21117,21191,39015,39017,39025,39061,39165|32003|20091,20103,20107,20121,20209,29013,29025,29037,29047,29049,29095,29107,29165,29177|39035,39055,39085,39093,39103|39041,39045,39049,39073,39089,39097,39117,39127,39129,39159|48021,48055,48209,48453,48491|18011,18013,18057,18059,18063,18081,18095,18097,18109,18133,18145|06069,06085|47015,47021,47037,47043,47081,47111,47119,47147,47149,47159,47165,47169,47187,47189|37053,37073,51073,51093,51095,51115,51199,51550,51650,51700,51710,51735,51740,51800,51810,51830|25005,44001,44003,44005,44007,44009|55079,55089,55131,55133|12003,12019,12031,12089,12109|40017,40027,40051,40081,40083,40087,40109|05035,28009,28033,28093,28137,28143,47047,47157,47167|18019,18043,18061,18143,18175,21029,21103,21111,21185,21211,21215,21223|37069,37101,37183|51007,51033,51036,51041,51053,51075,51085,51087,51101,51127,51145,51149,51183,51570,51670,51730,51760|22051,22071,22075,22087,22089,22093,22095,22103|09003,09007,09013|49035,49045';
+
+var census = (year => Math.floor((+year - 1) / 10) * 10);
+
+function seeds(features, options) {
+    options = options || {};
+    var seeds;
+    var ids = features.map(d => d.properties.id);
+    var method = options.method || 'random';
+    var stateCount = options.stateCount || 50;
+    var sliceEnd = stateCount > 2 ? stateCount - 2 : stateCount;
+
+    if (method === 'large') {
+        seeds = largeCounties.split('|')
+            .map(geoid => ids.indexOf(geoid))
+            .slice(0, sliceEnd);
+    }
+    else if (method === 'state') {
+        var byOriginalState = ids.reduce(function(obj, geoid, i) {
+            if (excludes.indexOf(geoid) > -1)
+                return obj;
+            var key = geoid.substr(0, 2);
+            obj[key] = obj[key] || [];
+            obj[key].push(i);
+            return obj;
+        }, {});
+        seeds = Object.keys(byOriginalState).map(d => random(byOriginalState[d])).slice(0, sliceEnd);
+    }
+    else if (method === 'metro') {
+        seeds = metros.split('|')
+            .map(d => d.split(',').map(geoid => ids.indexOf(geoid))
+        );
+    }
+    else {
+        var excludeIds = new Set(excludes.map(geoid => ids.indexOf(geoid)));
+        seeds = d3.shuffle(
+            d3.range(2, features.length)
+                .filter(i => !excludeIds.has(i))
+            ).slice(0, sliceEnd);
+    }
+
+    return seeds;
+}
+
+function getYear() {
+    return document.querySelector('[name=year]:checked').value;
+}
+
+function make(features, neighbors, options) {
+    var seedindices = seeds(features, options);
+    var maker = new stateMaker(features, neighbors, {prob: prob, popField: '10'});
+    var stateCount = (options||{}).stateCount || 3;
+
+    if (stateCount > 2) {
+        var ak = maker.addState(features
+            .filter(d => d.properties.id === '02000')
+            .map(d => features.indexOf(d))
+        );
+        maker.freezeState(ak);
+    }
+    if (stateCount > 1) {
+        var hi = maker.addState(features
+            .map((d, i) => hawaii.indexOf(d.properties.id) > -1 ? i : -1)
+            .filter(d => d > -1)
+        );
+        maker.freezeState(hi);
+    }
+    var dc = maker.addState(features
+        .filter(d => d.properties.id === '11001')
+        .map(d => features.indexOf(d))
+    );
+ 
+    return maker.freezeState(dc)
+        .divide(seedindices);
+}
+
+function program(error, topo, csv) {
+    if (error) throw error;
+
+    var features = topojson.feature(topo, topo.objects.counties).features;
+    var neighbors = topojson.neighbors(topo.objects.counties.geometries);
+    var results = d3.map(csv, d => d.GEOID);
+    var elections = Object.keys(candidates).sort((a, b) => b - a);
+    var ids = features.map(d => d.properties.id);
+
+    function add_connection(id1, id2) {
+        var idx1 = ids.indexOf(id1);
+        var idx2 = ids.indexOf(id2);
+        if (idx1 === -1 || idx2 === -1) {
+            console.log(id1, id2);
+            return;
+        }
+        neighbors[idx2].push(idx1);
+        neighbors[idx1].push(idx2);
+    }
+
+    forceNeighbors.forEach(pair => add_connection.apply(null, pair));
+
+    // e.g. voteCount('d16') returns state-by-state totals for Dem in '16
+    stateMaker.prototype.voteCount = function(key) {
+        return this.states().map(state => this.sum(state, i =>
+            +results.get(this.features[i].properties.id)[key]
+        ));
+    };
+
+    svg.append('g')
+        .attr('class', 'sg-counties')
+        .selectAll('path')
+        .data(features).enter()
+        .append("path")
+        .attr('class', 'sg-county')
+        .attr('d', path);
+
+    // set up SVG and DOM
+    var state = svg.append('g').attr('class', 'sg-states');
+
+    var boundary = svg.append('g')
+        .append('path')
+        .attr('class', 'sg-boundary');
+
+    var tipping = svg.append('g')
+        .append('path')
+        .classed('sg-tipping', true);
+
+    var labels = svg.append('g').classed('sg-labels', true);
+    labels.append('g').classed('stroke', true);
+    labels.append('g').classed('fill', true);
+
+    // create bar charts
+    var bars = svg.append('g').classed('sg-bars', true)
+        .attr('transform', 'translate(' + [margins.left, height - (elections.length * (barheight + barbuf))] + ')');
+
+    bars.append('line')
+        .attr('y1', -barbuf)
+        .attr('y2', elections.length * (barheight + barbuf));
+
+    var transition = d3.transition()
+        .duration(250);
+
+    var infobox = d3.select('#infobox');
+    infobox.select('table').append('tbody');
+
+    var legend = svg.append('g')
+        .classed('legend', true)
+        .attr('transform', 'translate(' + (width - margins.right - (legUnit * legPct.length)) + ',480)');
+
+    var countyLegend = legend.append('g')
+        .classed('legend-county', true)
+        .attr('transform', 'translate(0,' + (legUnit * 3.5) + ')')
+        .call(drawCountyLegend, legUnit);
+
+    // tipping point legend
+    var stateLegend = legend.append('g')
+        .classed('legend-state', true)
+        .call(drawStateLegend, legUnit);
 
     /**
      * Run the map
@@ -346,8 +352,20 @@ function program(error, topo, csv) {
     function run() {
         if (d3.event) d3.event.preventDefault();
 
-        var method = document.querySelector('[name=method]:checked').value;
-        var maker = make(features, neighbors, {method: method});
+        var method = document.querySelector('[name=method]:checked').value,
+            reps = +document.getElementById('count-rep').value + 1,
+            stateCount = +document.getElementById('count-state').value;
+
+        var maker = make(features, neighbors, {method: method, stateCount: stateCount});
+
+        // 2 => dc "senators"
+        var total = reps + 2 + stateCount * 2,
+            win = Math.floor(total / 2) + 1;
+
+        x.domain([0, total]);
+
+        console.log('reps ' + reps + ' states: ' + stateCount);
+        console.log('total ' + total + '. win ' + win);
 
         var evs = {
             1990: maker.ev(reps, '90'),
@@ -582,6 +600,10 @@ function program(error, topo, csv) {
             .attr('transform', (_, i) => 'translate(0,' + (i * (barheight + barbuf)) + ')' );
 
         // year labels
+        bars.select('line')
+            .attr('x1', x(win))
+            .attr('x2', x(win));
+
         barEnter.append('text')
             .text(d => d.year)
             .attr('dx', -margins.left)
@@ -678,6 +700,10 @@ function program(error, topo, csv) {
     }
 
     d3.selectAll('#button-run').on('click', run);
+
+    d3.selectAll('[type=range]').on('change', function(){
+        document.getElementById(this.id + '-output').value = this.value;
+    });
 
     run();
 }
