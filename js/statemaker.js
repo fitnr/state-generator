@@ -44,7 +44,7 @@ stateMaker.prototype.sum = function(countySet, accessor) {
 stateMaker.prototype.addState = function(list) {
     // add to list
     var i = this._states.push(new Set([])) - 1;
-    list.forEach(x => this.addToState(x, i));
+    (Array.isArray(list) ? list : [list]).forEach(x => this.addToState(x, i));
     return i;
 };
 
@@ -85,9 +85,7 @@ stateMaker.prototype.freezeState = function(d) {
  */
 stateMaker.prototype.divide = function(seeds, options) {
     options = options || {assign: true};
-    seeds.forEach(function(seed) { this.addState([seed]); }, this);
-
-    var states = seeds.map(this.stateOf, this),
+    var states = seeds.map(function(seed) { return this.addState(seed); }, this),
         active = true,
         statuses = states.map(function(_, i) { return this.frozen.has(i) ? false : true; }, this);
 
