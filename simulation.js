@@ -10,18 +10,30 @@ var stateMaker = require('./js/statemaker');
 function list(x) { return x.split(','); }
 function random(list) { return list[Math.floor(Math.random() * list.length)]; }
 
+var elections = '2000,2004,2008,2012,2016';
+var hawaii = ['15001', '15003', '15005', '15007', '15009'];
+var forceNeighbors = [
+    ['26097', '26031'],
+    ['26097', '26047'],
+    ['51810', '51131'],
+    ['25007', '25019'],
+    ['25001', '25019'],
+    ['25007', '25001'],
+    ['53073', '53055'],
+];
+
 var parser = new ArgumentParser({version: '0.1'});
 
 parser.addArgument(['topojson']);
 parser.addArgument(['csv']);
 parser.addArgument(['-e', '--seeds'], {help: 'list of seed counties'});
-parser.addArgument(['--states'], {help: 'number of states', type: parseInt, defaultValue: 48});
-parser.addArgument(['-r', '--random-seeds'], {action: 'storeTrue', help: 'Use completely random seed list'});
+parser.addArgument(['--states'], {help: 'number of states (not including DC)', type: parseInt, defaultValue: 50});
+parser.addArgument(['--reps'], {help: 'number of representatives', type: parseInt, defaultValue: 435});
+parser.addArgument(['-c', '--one-per-state'], {action: 'storeTrue', help: 'Use one random county per state'});
 parser.addArgument(['-s', '--sims'], {help: 'number of simulations', type: parseInt, defaultValue: 100});
+parser.addArgument(['-l', '--elections'], {help: 'elections', type: list, defaultValue: elections});
 
 var program = parser.parseArgs();
-
-var elections = ['00', '04', '08', '12', '16'];
 
 var countScale = d3.scalePow()
     .exponent(2)
@@ -38,9 +50,15 @@ function prob(count, pop) {
     return (countScale(count) + populationScale(pop)) / 2;
 }
 
+function censusYear(year) {
+    return Math.floor((+year - 1) / 10) * 10;
+}
+
 function simulate(results, features, neighbors) {
     var seedIndices,
         mapfeatures = d3.map(features, d => d.properties.id);
+
+    var stateCount = program.states > 2 ? program.states - 2 : program.states;
 
     if (program.seeds) {
         seedIndices = program.seeds.split(',').map(d => features.indexOf(mapfeatures.get(d)));
@@ -51,34 +69,34 @@ function simulate(results, features, neighbors) {
             seedIndices.splice(i, 1);
             i = seedIndices.indexOf(-1);
         }
-
         seedIndices = d3.shuffle(seedIndices);
     }
-
     // totally random seeds
-    else if (program.random_seeds)
-        seedIndices = d3.shuffle(d3.range(2, features.length)).slice(0, program.states);
-
-    // pick one random county from each state
-    else {
+    else if (program.one_per_state) {
         var byOriginalState = features.reduce(function(obj, d, i) {
-                if (['02', '15', '11001'].indexOf(d.properties.id) > -1)
+                if (['02000', '11001'].concat(hawaii).indexOf(d.properties.id) > -1)
                     return obj;
                 var key = d.properties.id.substr(0, 2);
                 obj[key] = obj[key] || [];
                 obj[key].push(i);
                 return obj;
             }, {});
-
         seedIndices = Object.keys(byOriginalState).map(d => random(byOriginalState[d]));
+    }
+    // pick one random county from each state
+    else {
+        seedIndices = d3.shuffle(d3.range(2, features.length)).slice(0, stateCount);
     }
 
     maker = new stateMaker(features, neighbors, {prob: prob});
-    maker.addState([features.indexOf(mapfeatures.get('02'))]);
-    maker.addState([features.indexOf(mapfeatures.get('15'))]);
+    var ak = maker.addState([features.indexOf(mapfeatures.get('02000'))]);
+    var hi = maker.addState(hawaii.map(function(id) { return features.indexOf(mapfeatures.get(id)); }));
     var dc = maker.addState([features.indexOf(mapfeatures.get('11001'))]);
+
     maker.freezeState(dc)
-        .divideCountry(seedIndices, {reps: 436});
+        .freezeState(hi)
+        .freezeState(ak)
+        .divide(seedIndices);
 
     // e.g. voteCount('d16') returns state-by-state totals for Dem in '16
     var voteCount = function(key) {
@@ -86,27 +104,42 @@ function simulate(results, features, neighbors) {
             .map(state => maker.sum(state, i => +results[features[i].properties.id][key]));
     };
 
-    var counts = elections.reduce((obj, y) => (
+    var counts = program.elections.reduce((obj, y) => (
         obj[y] = {
             d: voteCount('d' + y),
             r: voteCount('r' + y)
         }, obj
     ), {});
 
-    var evs = {
-        1990: maker.ev(436, '90'),
-        2000: maker.ev(436, '00'),
-        2010: maker.ev(436, '10'),
-    };
+    var evs,
+        provisionalEVs;
+
+    if (program.reps <= 435)
+        evs = new Map([
+            [1990, maker.ev(program.reps + 1, '90')],
+            [2000, maker.ev(program.reps + 1, '00')],
+            [2010, maker.ev(program.reps + 1, '10')],
+        ]);
+    else {
+        provisionalEVs = new Map([
+            [1990, maker.ev(program.reps, '90')],
+            [2000, maker.ev(program.reps, '00')],
+            [2010, maker.ev(program.reps, '10')],
+        ]);
+        evs = new Map(Array.from(provisionalEVs.entries()).map(function(d) {
+            var min = Math.min.apply(Math, d[1]) - 2,
+                y = (d[0]+'').substr(-2);
+            return [d[0], maker.ev(program.reps + min, y)];
+        }));
+    }
 
     // return the number list of EV total by state for given year, party
     function getEv(year, party) {
         var oppo = party === 'd' ? 'r' : 'd';
-        var census = 2000 + (Math.floor((+year - 1) / 10) * 10);
-        return evs[census].map((ev, i) => (counts[year][party][i] > counts[year][oppo][i]) ? ev : 0);
+        return evs.get(censusYear(year)).map((ev, i) => (counts[year][party][i] > counts[year][oppo][i]) ? ev : 0);
     }
 
-    return elections.map(function(year) {
+    return program.elections.map(function(year) {
         var d = getEv(year, 'd'), r = getEv(year, 'r');
         return {
             year: year,
@@ -119,7 +152,7 @@ function simulate(results, features, neighbors) {
 }
 
 function summary(data) {
-    return elections.map(function(year) {
+    return program.elections.map(function(year) {
         var rows = [].concat.apply([], data).filter(d => d.year == year);
         return {
             year: year,
@@ -138,6 +171,20 @@ function run(error, json, csvData) {
     var topology = JSON.parse(json);
     var features = topojson.feature(topology, topology.objects.counties).features;
     var neighbors = topojson.neighbors(topology.objects.counties.geometries);
+    var ids = features.map(d => d.properties.id);
+
+    forceNeighbors.forEach(function(d) {
+        var idx1 = ids.indexOf(d[0]);
+        var idx2 = ids.indexOf(d[1]);
+
+        if (idx1 === -1 || idx2 === -1) {
+            console.log(id1, id2);
+            return;
+        }
+ 
+        neighbors[idx2].push(idx1);
+        neighbors[idx1].push(idx2);
+    });
 
     var parser = csv.parse({delimiter: ',', columns: true}, function(err, data) {
         if (err) throw err;
