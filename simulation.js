@@ -10,7 +10,7 @@ var stateMaker = require('./js/statemaker');
 function list(x) { return x.split(','); }
 function random(list) { return list[Math.floor(Math.random() * list.length)]; }
 
-var elections = '2000,2004,2008,2012,2016';
+var elections = ['2000', '2004', '2008', '2012', '2016'];
 var hawaii = ['15001', '15003', '15005', '15007', '15009'];
 var forceNeighbors = [
     ['26097', '26031'],
