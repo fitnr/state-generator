@@ -61,15 +61,11 @@ function censusYear(year) {
     return ((Math.floor((+year - 1) / 10) * 10) + '').substr(-2);
 }
 
-function simulate(results, features, neighbors) {
-    var seedIndices,
-        mapfeatures = d3.map(features, d => d.properties.id);
-
-    var stateCount = Math.max(1, program.states > 2 ? program.states - 2 : program.states);
+function makeSeeds(features) {
+    var seedIndices;
 
     if (program.seeds) {
         seedIndices = program.seeds.split(',').map(d => features.indexOf(mapfeatures.get(d)));
-
         var i = seedIndices.indexOf(-1);
         while (i > -1) {
             console.error("Couldn't find", program.seeds.split(',')[i]);
@@ -78,7 +74,7 @@ function simulate(results, features, neighbors) {
         }
         seedIndices = d3.shuffle(seedIndices);
     }
-    // totally random seeds
+    // pick one random county from each state
     else if (program.one_per_state) {
         var byOriginalState = features.reduce(function(obj, d, i) {
                 if (['02000', '11001'].concat(hawaii).indexOf(d.properties.id) > -1)
@@ -90,27 +86,35 @@ function simulate(results, features, neighbors) {
             }, {});
         seedIndices = Object.keys(byOriginalState).map(d => random(byOriginalState[d]));
     }
-    // pick one random county from each state
+    // totally random seeds
     else {
-        seedIndices = d3.shuffle(d3.range(2, features.length)).slice(0, stateCount);
+        var newStateCount = Math.max(1, program.states > 2 ? program.states - 2 : program.states);
+        seedIndices = d3.shuffle(d3.range(2, features.length)).slice(0, newStateCount);
     }
+    return seedIndices;   
+}
 
-    maker = new stateMaker(features, neighbors, {prob: prob});
+function simulate(results, features, neighbors) {
+    var mapfeatures = d3.map(features, d => d.properties.id),
+        maker = new stateMaker(features, neighbors, {prob: prob}),
+        seedIndices = makeSeeds(features);
 
-    if (stateCount > 2) {
+    if (program.states > 2) {
         var ak = maker.addState([features.indexOf(mapfeatures.get('02000'))]);
         maker.freezeState(ak);
     }
 
-    if (stateCount > 1) {
+    if (program.states > 1) {
         var hi = maker.addState(hawaii.map(function(id) { return features.indexOf(mapfeatures.get(id)); }));
         maker.freezeState(hi);
     }
     
-    var dc = maker.addState([features.indexOf(mapfeatures.get('11001'))]);
+    maker.freezeState(
+        maker.addState([features.indexOf(mapfeatures.get('11001'))])
+    );
 
-    maker.freezeState(dc)
-        .divide(seedIndices);
+    // divide state according to seeds
+    maker.divide(seedIndices);
 
     // e.g. voteCount('d16') returns state-by-state totals for Dem in '16
     var voteCount = function(key) {
@@ -202,13 +206,11 @@ function run(error, json, csvData) {
 
     forceNeighbors.forEach(addNeighbors);
 
-    var stateCount = Math.max(1, program.states > 2 ? program.states - 2 : program.states);
-
     // add Hawaii-to-California link.
-    if (stateCount === 1) hiNeighbors.forEach(addNeighbors);
+    if (program.states === 1) hiNeighbors.forEach(addNeighbors);
 
     // add Alaska-to-Washgtn link.
-    if (stateCount <= 2) addNeighbors(['02000', '53073']);
+    if (program.states <= 2) addNeighbors(['02000', '53073']);
 
     var parser = csv.parse({delimiter: ',', columns: true}, function(err, data) {
         if (err) throw err;
@@ -217,13 +219,17 @@ function run(error, json, csvData) {
             sims = [],
             simCount = program.sims || 10;
 
-        console.error('states:', stateCount, 'reps:', program.reps);
+        console.error('states:', program.states, 'reps:', program.reps, 'sims:', simCount);
 
         for (var i = 0; i < simCount; i++)
             sims.push(simulate(results, features, neighbors));
 
-        console.error('sims', simCount);
-        summary(sims).forEach(x => console.log(JSON.stringify(x)));
+        console.log(JSON.stringify({
+            states: program.states,
+            reps: program.reps,
+            simulations: simCount,
+            results: summary(sims)
+        }));
     });
     fs.createReadStream(__dirname + '/' + program.csv).pipe(parser);
 }
