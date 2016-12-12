@@ -21,7 +21,14 @@ var forceNeighbors = [
     ['25007', '25001'],
     ['53073', '53055'],
 ];
-
+var hiNeighbors = [
+    ['15001', '15009'],
+    ['15005', '15009'],
+    ['15003', '15009'],
+    ['15007', '15003'],
+    ['15007', '06073'],
+    ['15001', '06073']
+];
 var parser = new ArgumentParser({version: '0.1'});
 
 parser.addArgument(['topojson']);
@@ -198,16 +205,7 @@ function run(error, json, csvData) {
     var stateCount = Math.max(1, program.states > 2 ? program.states - 2 : program.states);
 
     // add Hawaii-to-California link.
-    if (stateCount === 1) {
-        [
-            ['15001', '15009'],
-            ['15005', '15009'],
-            ['15003', '15009'],
-            ['15007', '15003'],
-            ['15007', '06073'],
-            ['15001', '06073']
-        ].forEach(addNeighbors);
-    }
+    if (stateCount === 1) hiNeighbors.forEach(addNeighbors);
 
     // add Alaska-to-Washgtn link.
     if (stateCount <= 2) addNeighbors(['02000', '53073']);
