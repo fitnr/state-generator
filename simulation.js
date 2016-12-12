@@ -65,7 +65,7 @@ function simulate(results, features, neighbors) {
 
         var i = seedIndices.indexOf(-1);
         while (i > -1) {
-            console.log("Couldn't find", program.seeds.split(',')[i]);
+            console.error("Couldn't find", program.seeds.split(',')[i]);
             seedIndices.splice(i, 1);
             i = seedIndices.indexOf(-1);
         }
@@ -178,7 +178,7 @@ function run(error, json, csvData) {
         var idx2 = ids.indexOf(d[1]);
 
         if (idx1 === -1 || idx2 === -1) {
-            console.log(id1, id2);
+            console.error(id1, id2);
             return;
         }
  
@@ -193,11 +193,12 @@ function run(error, json, csvData) {
             sims = [],
             simCount = program.sims || 10;
 
+        console.error('states:', stateCount, 'reps:', program.reps);
+
         for (var i = 0; i < simCount; i++)
             sims.push(simulate(results, features, neighbors));
 
-        console.log('sims', simCount);
-        console.log('averages');
+        console.error('sims', simCount);
         summary(sims).forEach(x => console.log(JSON.stringify(x)));
     });
     fs.createReadStream(__dirname + '/' + program.csv).pipe(parser);
