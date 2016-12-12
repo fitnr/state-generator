@@ -58,7 +58,7 @@ function simulate(results, features, neighbors) {
     var seedIndices,
         mapfeatures = d3.map(features, d => d.properties.id);
 
-    var stateCount = program.states > 2 ? program.states - 2 : program.states;
+    var stateCount = Math.max(1, program.states > 2 ? program.states - 2 : program.states);
 
     if (program.seeds) {
         seedIndices = program.seeds.split(',').map(d => features.indexOf(mapfeatures.get(d)));
@@ -89,13 +89,20 @@ function simulate(results, features, neighbors) {
     }
 
     maker = new stateMaker(features, neighbors, {prob: prob});
-    var ak = maker.addState([features.indexOf(mapfeatures.get('02000'))]);
-    var hi = maker.addState(hawaii.map(function(id) { return features.indexOf(mapfeatures.get(id)); }));
+
+    if (stateCount > 2) {
+        var ak = maker.addState([features.indexOf(mapfeatures.get('02000'))]);
+        maker.freezeState(ak);
+    }
+
+    if (stateCount > 1) {
+        var hi = maker.addState(hawaii.map(function(id) { return features.indexOf(mapfeatures.get(id)); }));
+        maker.freezeState(hi);
+    }
+    
     var dc = maker.addState([features.indexOf(mapfeatures.get('11001'))]);
 
     maker.freezeState(dc)
-        .freezeState(hi)
-        .freezeState(ak)
         .divide(seedIndices);
 
     // e.g. voteCount('d16') returns state-by-state totals for Dem in '16
@@ -173,7 +180,7 @@ function run(error, json, csvData) {
     var neighbors = topojson.neighbors(topology.objects.counties.geometries);
     var ids = features.map(d => d.properties.id);
 
-    forceNeighbors.forEach(function(d) {
+    var addNeighbors = function(d) {
         var idx1 = ids.indexOf(d[0]);
         var idx2 = ids.indexOf(d[1]);
 
@@ -184,7 +191,26 @@ function run(error, json, csvData) {
  
         neighbors[idx2].push(idx1);
         neighbors[idx1].push(idx2);
-    });
+    };
+
+    forceNeighbors.forEach(addNeighbors);
+
+    var stateCount = Math.max(1, program.states > 2 ? program.states - 2 : program.states);
+
+    // add Hawaii-to-California link.
+    if (stateCount === 1) {
+        [
+            ['15001', '15009'],
+            ['15005', '15009'],
+            ['15003', '15009'],
+            ['15007', '15003'],
+            ['15007', '06073'],
+            ['15001', '06073']
+        ].forEach(addNeighbors);
+    }
+
+    // add Alaska-to-Washgtn link.
+    if (stateCount <= 2) addNeighbors(['02000', '53073']);
 
     var parser = csv.parse({delimiter: ',', columns: true}, function(err, data) {
         if (err) throw err;
