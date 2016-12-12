@@ -51,7 +51,7 @@ function prob(count, pop) {
 }
 
 function censusYear(year) {
-    return Math.floor((+year - 1) / 10) * 10;
+    return ((Math.floor((+year - 1) / 10) * 10) + '').substr(-2);
 }
 
 function simulate(results, features, neighbors) {
@@ -111,25 +111,25 @@ function simulate(results, features, neighbors) {
         }, obj
     ), {});
 
-    var evs,
-        provisionalEVs;
+    var evs;
+    var censuses = program.elections.map(censusYear)
+        .filter((d, i, array) => array.indexOf(d) === i);
 
-    if (program.reps <= 435)
-        evs = new Map([
-            [1990, maker.ev(program.reps + 1, '90')],
-            [2000, maker.ev(program.reps + 1, '00')],
-            [2010, maker.ev(program.reps + 1, '10')],
-        ]);
+    if (program.reps <= 435) {
+        evs = new Map(
+            censuses.map(year =>
+                [year, maker.ev(program.reps + 1, year)]
+            )
+        );
+    }
     else {
-        provisionalEVs = new Map([
-            [1990, maker.ev(program.reps, '90')],
-            [2000, maker.ev(program.reps, '00')],
-            [2010, maker.ev(program.reps, '10')],
-        ]);
-        evs = new Map(Array.from(provisionalEVs.entries()).map(function(d) {
-            var min = Math.min.apply(Math, d[1]) - 2,
-                y = (d[0]+'').substr(-2);
-            return [d[0], maker.ev(program.reps + min, y)];
+        var provisionalEVs = censuses.map(year => (
+            {year: year, ev: maker.ev(program.reps, year)}
+        ));
+
+        evs = new Map(provisionalEVs.map(function(d) {
+            var min = Math.min.apply(Math, d.ev) - 2;
+            return [d.year, maker.ev(program.reps + min, d.year)];
         }));
     }
 
