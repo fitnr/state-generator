@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>results of state/reps simulation</title>
+    <script src="node_modules/d3/build/d3.min.js"></script>
+    <style>
+        text {
+            font-family: sans-serif;
+            text-anchor: middle;
+            fill: #222;
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<script>
+    var size = 10;
+    var height = 35 * size,
+        width = 99 * size;
+    
+    var margin = 60;
+    var max = 100;
+
+    var svg = d3.select('body').append('svg')
+        .attr('height', height + (margin * 3))
+        .attr('width', width + (margin * 2))
+        .append('g')
+        .attr('transform', 'translate(' + margin + ',' + margin + ')');
+
+    var color = d3.scaleLinear()
+        .domain([0, max])
+        .range(['white', 'red']);
+
+    var x = d3.scaleLinear()
+        .domain([1, max])
+        .range([0, width]);
+
+    var y = d3.scaleLinear()
+        .domain([150, 1000])
+        .range([height, 0]);
+
+    var xax = d3.axisBottom()
+        .ticks(50)
+        .tickPadding(5)
+        .scale(x);
+
+    var yax = d3.axisLeft()
+        .ticks(10)
+        .tickPadding(15)
+        .scale(y);
+
+    svg.append('g')
+        .classed('x axis', true)
+        .attr('transform', 'translate(' + [size / 2, height + 1.5 * size] + ')')
+        .call(xax)
+        .append('text')
+        .text('number of states')
+        .attr('transform', 'translate(' + [width/2, margin/1.5] + ')');
+
+    svg.append('g')
+        .classed('y axis', true)
+        .attr('transform', 'translate(' + [-size/2, size/2] + ')')
+        .call(yax)
+        .append('text')
+        .text('Seats in House of Representatives')
+        .attr('transform', 'translate(' + (-margin/1.5) + ',' + (height / 2) + ') rotate(-90)');
+
+    svg.append('text')
+        .attr('dx', width/2)
+        .attr('dy', margin/-2.25)
+        .style('font-size', 14)
+        .text('2016 election: changing the number of states and size of the House');
+
+    var legend = svg.append('g')
+        .classed('legend', true)
+        .attr('transform', 'translate(' + [width, height + margin/1.2] + ')')
+        .selectAll('rect')
+        .data([100, 75, 50, 25, 0]).enter();
+
+    legend.append('rect')
+        .style('fill', color)
+        .attr('height', size)
+        .attr('width', size)
+        .style('stroke', 'gray')
+        .style('stroke-width', 0.25)
+        .attr('x', function(d, i) { return -i * size; });
+
+    legend.append('text')
+        .text(function(d, i) { return i % 2 === 0 ? d : null; })
+        .attr('dx', size/2)
+        .attr('dy', 2 * size)
+        .attr('x', function(d, i) { return -i * size; });
+
+    var rect = svg.append('g');
+
+    d3.json('json/results.json', function(error, data) {
+        if (error) throw error;
+
+        var rects = rect.selectAll('rect')
+            .data(data).enter()
+            .append('rect')
+            .attr('width', size)
+            .attr('height', size)
+            .attr('id', function(d) { return 'i' + d.states + '-' + d.reps; })
+            .attr('x', function(d) { return x(+d.states); })
+            .attr('y', function(d) { return y(+d.reps); })
+            .style('fill', function(d) { return color(+d.dwin); });
+
+        rects.filter(function(d) { return d.states==50 && d.reps==450;})
+            .style('stroke', 'black')
+            .call(function(selection) {
+                var node = selection.node();
+                var parent = node.parentElement;
+                parent.removeChild(node);
+                parent.appendChild(node);
+            });
+    });
+</script>
+</body>
+</html>
