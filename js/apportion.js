@@ -7,8 +7,9 @@
 module.exports = function(states, options) {
     options = options || {};
     var reps = options.reps || 435,
+        // Assign one rep to each state
         allocations = states.map(function() { return 1; }),
-        allocated = 0;
+        allocated = states.length;
 
     function priority(d, i) {
         var c = allocations[i];
@@ -20,7 +21,7 @@ module.exports = function(states, options) {
         var priorities = states.map(priority),
             top = priorities.indexOf(Math.max.apply(null, priorities));
         allocations[top]++;
-        allocated = allocations.reduce(sum);
+        allocated++;
     }
     return allocations;
 };
