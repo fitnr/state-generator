@@ -11,7 +11,7 @@ main.min.js: main.js
 	uglifyjs $< -cmo $@ 
 
 main.js: js/script.js $(SRC) rollup.js .babelrc
-	rollup -c rollup.js -f iife -n sg -g d3:d3 $< -o $@
+	$(NM)/rollup -c rollup.js -f iife -n sg -g d3:d3 $< -o $@
 
 files/state-generator-counties.json: geo/counties-albers.geojson | files
 	$(NM)/geo2topo -q 1e5 counties=$< | \
